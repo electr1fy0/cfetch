@@ -1,6 +1,19 @@
+use clap::Parser;
 use reqwest;
 use serde::Deserialize;
 use std::env;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short = 'r', long)]
+    rating: Option<String>,
+    #[arg(short, long)]
+    info: Option<String>,
+
+    #[arg(short, long, default_value_t = 1)]
+    count: u8,
+}
 
 #[derive(Deserialize, Debug)]
 struct RatingResponse {
@@ -28,33 +41,41 @@ struct UserResponse {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+
 struct UserData {
-    first_name: String,
-    last_name: String,
     rank: String,
+    handle: String,
     max_rating: i32,
     rating: i32,
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    // let args: Vec<String> = env::args().collect();
 
-    if args.len() < 3 {
-        todo!();
-    }
+    // if args.len() < 3 {
+    //     todo!();
+    // }
 
-    if args[1] == "--history" || args[1] == "-h" {
-        let handle = &args[2];
+    let args = Args::parse();
 
-        match get_rating_history(handle) {
+    let args = Args::parse();
+
+    match (args.rating, args.info) {
+        (Some(handle), None) => match get_rating_history(&handle) {
             Ok(res) => print_rating_history(res),
             Err(e) => println!("{e}"),
-        }
-    } else if args[1] == "--info" || args[1] == "-i" {
-        let handle = &args[2];
-        match get_user_info(handle) {
+        },
+        (None, Some(handle)) => match get_user_info(&handle) {
             Ok(res) => print_user_info(res),
             Err(e) => println!("{e}"),
+        },
+        (Some(_), Some(_)) => {
+            eprintln!("Can't use both together.");
+            std::process::exit(1); // Double colon, not single
+        }
+        (None, None) => {
+            eprintln!("Provide either --history or --info");
+            std::process::exit(1);
         }
     }
 }
@@ -108,17 +129,17 @@ fn print_rating_history(response: RatingResponse) {
 }
 
 fn print_user_info(response: UserResponse) {
-    let repeat_count = 96;
+    let repeat_count = 73;
     println!("{}", "-".repeat(repeat_count));
     println!(
-        "| {:<20} | {:<20} | {:<20} | {:>10} | {:>10} |",
-        "First Name", "Last Name", "Rank", "Rating", "Max Rating"
+        "| {:<20} | {:<20} | {:>10} | {:>10} |",
+        "Handle", "Rank", "Rating", "Max Rating"
     );
     // println!("{}", "-".repeat(repeat_count));
     for user in response.result {
         println!(
-            "| {:<20} | {:<20} | {:<20} | {:>10} | {:>10} |",
-            user.first_name, user.last_name, user.rank, user.rating, user.max_rating
+            "| {:<20} | {:<20} | {:>10} | {:>10} |",
+            user.handle, user.rank, user.rating, user.max_rating
         );
     }
     println!("{}", "-".repeat(repeat_count));
