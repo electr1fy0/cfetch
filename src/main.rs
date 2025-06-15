@@ -1,7 +1,6 @@
 use reqwest;
 use serde::Deserialize;
 use std::env;
-use std::io::Error;
 
 #[derive(Deserialize, Debug)]
 struct RatingResponse {
@@ -23,25 +22,28 @@ struct RatingData {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() <= 1 {
+    if args.len() < 3 {
         todo!();
     }
 
     if args[1] == "--history" || args[1] == "-h" {
         let handle = &args[2];
-        let res = get_rating_history(handle).unwrap();
-        print_rating_history(res);
+
+        match get_rating_history(handle) {
+            Ok(res) => print_rating_history(res),
+            Err(e) => println!("{e}"),
+        }
     }
 }
 
-fn get_rating_history(handle: &str) -> Result<RatingResponse, reqwest::Error> {
+fn get_rating_history(handle: &str) -> Result<RatingResponse, Box<dyn std::error::Error>> {
     let url = format!("https://codeforces.com/api/user.rating?handle={}", handle);
     let res = reqwest::blocking::get(url)?.json::<RatingResponse>()?;
 
     if res.status == "FAILED" {
-        panic!("API Error");
+        return Err("API screwed something.".into());
     } else if res.result.is_empty() {
-        panic!("No such user");
+        return Err("No such user".into());
     }
     Ok(res)
 }
