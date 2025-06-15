@@ -2,7 +2,6 @@ use clap::Parser;
 
 mod args;
 use args::Args;
-use serde::Deserialize;
 
 fn main() {
     let args = Args::parse();

@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, de::DeserializeOwned};
 
 use chrono::{DateTime, FixedOffset};
 
@@ -50,16 +50,19 @@ pub struct UserData {
     pub rating: i32,
 }
 
+pub fn make_request<T>(url: &str) -> Result<T, Box<dyn std::error::Error>>
+where
+    T: DeserializeOwned,
+{
+    let res = reqwest::blocking::get(url)?.json::<T>()?;
+
+    Ok(res)
+}
+
 pub fn get_rating_history(handle: &str) -> Result<RatingResponse, Box<dyn std::error::Error>> {
     let url = format!("https://codeforces.com/api/user.rating?handle={}", handle);
-    let res = reqwest::blocking::get(url)?.json::<RatingResponse>()?;
 
-    if res.status == "FAILED" {
-        return Err("API screwed something.".into());
-    } else if res.result.is_empty() {
-        return Err("No such user".into());
-    }
-    Ok(res)
+    return make_request(&url);
 }
 
 pub fn get_user_info(handle: &str) -> Result<UserResponse, Box<dyn std::error::Error>> {
@@ -67,22 +70,18 @@ pub fn get_user_info(handle: &str) -> Result<UserResponse, Box<dyn std::error::E
         "https://codeforces.com/api/user.info?handles={}&checkHistoricHandles=false",
         handle
     );
+    return make_request(&url);
+}
 
-    let res = reqwest::blocking::get(url)?.json::<UserResponse>()?;
-
-    if res.status == "FAILED" {
-        return Err("API screwed something.".into());
-    } else if res.result.is_empty() {
-        return Err("No such user".into());
-    }
-    Ok(res)
+pub fn get_contests() -> Result<ContestResponse, Box<dyn std::error::Error>> {
+    let url = " https://codeforces.com/api/contest.list?gym=false";
+    return make_request(&url);
 }
 
 pub fn print_rating_history(response: RatingResponse) {
     let repeat_count = 119;
     println!("\n User: {}", response.result[0].handle);
     println!("{}", "-".repeat(repeat_count));
-    // for i in 0..response.result.len() {
     println!(
         "| {:<12} | {:<65} | {:<6} | {:>10} | {:>10} |",
         "Contest ID", "Title", "Rank", "Old Rating", "New Rating"
@@ -113,12 +112,6 @@ pub fn print_user_info(response: UserResponse) {
         );
     }
     println!("{}", "-".repeat(repeat_count));
-}
-
-pub fn get_contests() -> Result<ContestResponse, Box<dyn std::error::Error>> {
-    let url = " https://codeforces.com/api/contest.list?gym=false";
-    let res = reqwest::blocking::get(url)?.json::<ContestResponse>()?;
-    Ok(res)
 }
 
 pub fn print_contests(response: ContestResponse) {
