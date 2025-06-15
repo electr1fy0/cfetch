@@ -25,13 +25,13 @@ cargo build --release
 ./target/release/cfetch -h <handle> # (for example)
 ```
 
-
 ## Usage
 
-| Option               | Description                       |
-|----------------------|-----------------------------------|
-| `--history <handle>` | Print rating history              |
-| `--info <handle>`    | Print user's profile information  |
-
+| Option             | Shorthand | Argument Type | Description                       |
+|--------------------|-----------|----------------|-----------------------------------|
+| `--rating`         | `-r`      | `<handle>`     | Print rating history              |
+| `--info`           | `-i`      | `<handle>`     | Print user's profile information  |
+| `--help`           | `-h`      | None           | Show help message                 |
+| `--version`        | `-V`      | None           | Show version                      |
 ---
 This is an early prototype.
