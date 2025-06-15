@@ -22,16 +22,16 @@ cargo build --release
 
 ### Run
 ```sh
-./target/release/cfetch -h <handle>
+./target/release/cfetch -h <handle> # (for example)
 ```
 
 
 ## Usage
 
-| Option         | Description                                                |
-|----------------|------------------------------------------------------------|
-| `--history <handle>` | Print rating history |
+| Option               | Description                       |
+|----------------------|-----------------------------------|
+| `--history <handle>` | Print rating history              |
+| `--info <handle>`    | Print user's profile information  |
 
 ---
-
 This is an early prototype.
