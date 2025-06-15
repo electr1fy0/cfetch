@@ -1,6 +1,7 @@
 use reqwest;
 use serde::Deserialize;
 use std::env;
+use std::io::Error;
 
 #[derive(Deserialize, Debug)]
 struct RatingResponse {
@@ -36,6 +37,12 @@ fn main() {
 fn get_rating_history(handle: &str) -> Result<RatingResponse, reqwest::Error> {
     let url = format!("https://codeforces.com/api/user.rating?handle={}", handle);
     let res = reqwest::blocking::get(url)?.json::<RatingResponse>()?;
+
+    if res.status == "FAILED" {
+        panic!("API Error");
+    } else if res.result.is_empty() {
+        panic!("No such user");
+    }
     Ok(res)
 }
 
