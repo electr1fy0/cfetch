@@ -1,5 +1,22 @@
 use serde::Deserialize;
 
+use chrono::{DateTime, FixedOffset};
+
+#[derive(Deserialize)]
+pub struct ContestResponse {
+    pub status: String,
+    pub result: Vec<ContestData>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ContestData {
+    pub id: i32,
+    pub name: String,
+    pub phase: String,
+    pub start_time_seconds: i32,
+}
+
 #[derive(Deserialize, Debug)]
 pub struct RatingResponse {
     pub status: String,
@@ -96,4 +113,38 @@ pub fn print_user_info(response: UserResponse) {
         );
     }
     println!("{}", "-".repeat(repeat_count));
+}
+
+pub fn get_contests() -> Result<ContestResponse, Box<dyn std::error::Error>> {
+    let url = " https://codeforces.com/api/contest.list?gym=false";
+    let res = reqwest::blocking::get(url)?.json::<ContestResponse>()?;
+    Ok(res)
+}
+
+pub fn print_contests(response: ContestResponse) {
+    let repeat_count = 106;
+    println!("\n Latest Contests:");
+    println!("{}", "-".repeat(repeat_count));
+    println!(
+        "| {:<10} | {:<70} | {:>16} |",
+        "Contest ID", "Title", "Start Time (IST)"
+    );
+    println!("{}", "-".repeat(repeat_count));
+
+    for i in 0..15 {
+        let contest = &response.result[i];
+        let utc_time = DateTime::from_timestamp(contest.start_time_seconds as i64, 0).unwrap();
+        let offset = FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap();
+        let local_time = utc_time.with_timezone(&offset);
+
+        let time = local_time.format("%d-%m-%Y %H:%M").to_string();
+        println!(
+            "| {:<10} | {:<70} | {:>16} |",
+            contest.id,
+            contest.name.chars().take(70).collect::<String>(),
+            time
+        );
+    }
+
+    println!("{}\n", "-".repeat(repeat_count));
 }

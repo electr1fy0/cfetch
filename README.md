@@ -31,6 +31,7 @@ cargo build --release
 |--------------------|-----------|----------------|-----------------------------------|
 | `--rating`         | `-r`      | `<handle>`     | Print rating history              |
 | `--info`           | `-i`      | `<handle>`     | Print user's profile information  |
+| `--contests`       | `-c`      | None           | Show latest Codeforces contests   |
 | `--help`           | `-h`      | None           | Show help message                 |
 | `--version`        | `-V`      | None           | Show version                      |
 ---
