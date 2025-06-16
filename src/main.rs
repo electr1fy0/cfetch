@@ -1,3 +1,4 @@
+use cfetch::print_submission_history;
 use clap::Parser;
 
 mod args;
@@ -14,6 +15,11 @@ fn main() {
     } else if let Some(handle) = args.info {
         match cfetch::get_user_info(&handle) {
             Ok(res) => cfetch::print_user_info(res),
+            Err(e) => println!("{e}"),
+        }
+    } else if let Some(handle) = args.submissions {
+        match cfetch::get_submission_history(&handle) {
+            Ok(res) => print_submission_history(res),
             Err(e) => println!("{e}"),
         }
     } else if args.contests {

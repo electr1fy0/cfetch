@@ -1,13 +1,15 @@
+use chrono::{DateTime, FixedOffset};
+use prettytable::{Cell, Row, Table};
 use serde::{Deserialize, de::DeserializeOwned};
 
-use chrono::{DateTime, FixedOffset};
-
-#[derive(Deserialize)]
-pub struct ContestResponse {
+// Parent struct for all API requests
+#[derive(Deserialize, Debug)]
+pub struct APIResponse<T> {
     pub status: String,
-    pub result: Vec<ContestData>,
+    pub result: Vec<T>,
 }
 
+// Child Structs:
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContestData {
@@ -15,12 +17,6 @@ pub struct ContestData {
     pub name: String,
     pub phase: String,
     pub start_time_seconds: i32,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct RatingResponse {
-    pub status: String,
-    pub result: Vec<RatingData>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -36,13 +32,6 @@ pub struct RatingData {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct UserResponse {
-    pub status: String,
-    pub result: Vec<UserData>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct UserData {
     pub rank: String,
     pub handle: String,
@@ -50,6 +39,24 @@ pub struct UserData {
     pub rating: i32,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubmissionData {
+    pub contest_id: i32,
+
+    pub creation_time_seconds: i32,
+    pub problem: Problem,
+    pub verdict: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Problem {
+    pub name: String,
+    pub index: String,
+}
+
+// Make all API requests
 pub fn make_request<T>(url: &str) -> Result<T, Box<dyn std::error::Error>>
 where
     T: DeserializeOwned,
@@ -59,13 +66,56 @@ where
     Ok(res)
 }
 
-pub fn get_rating_history(handle: &str) -> Result<RatingResponse, Box<dyn std::error::Error>> {
-    let url = format!("https://codeforces.com/api/user.rating?handle={}", handle);
+// Get type inferred requests and do whatever with them, (to improve)
+pub fn get_submission_history(
+    handle: &str,
+) -> Result<APIResponse<SubmissionData>, Box<dyn std::error::Error>> {
+    let url = format!(
+        " https://codeforces.com/api/user.status?handle={}&from=1&count=10",
+        handle
+    );
+    return make_request(&url);
+}
+pub fn print_submission_history(response: APIResponse<SubmissionData>) {
+    println!();
+    let mut table = Table::new();
+    table.add_row(Row::new(vec![
+        Cell::new("Contest ID"),
+        Cell::new("Index"),
+        Cell::new("Problem Name"),
+        Cell::new("Verdict"),
+        Cell::new("Time (IST)"),
+    ]));
 
+    for sub in response.result {
+        let utc_time = DateTime::from_timestamp(sub.creation_time_seconds as i64, 0).unwrap();
+        let offset = FixedOffset::east_opt(5 * 3600 + 60 * 30).unwrap();
+        let ist_time = utc_time
+            .with_timezone(&offset)
+            .format("%d-%m-%Y %H-%M")
+            .to_string();
+
+        table.add_row(Row::new(vec![
+            Cell::new(&sub.contest_id.to_string()),
+            Cell::new(&sub.problem.index),
+            Cell::new(&sub.problem.name),
+            Cell::new(&sub.verdict),
+            Cell::new(&ist_time),
+        ]));
+    }
+
+    table.printstd();
+}
+pub fn get_rating_history(
+    handle: &str,
+) -> Result<APIResponse<RatingData>, Box<dyn std::error::Error>> {
+    let url = format!("https://codeforces.com/api/user.rating?handle={}", handle);
+    // let response: RatingResponse<RatingData> = make_request(&url)?;
+    // Ok(response)
     return make_request(&url);
 }
 
-pub fn get_user_info(handle: &str) -> Result<UserResponse, Box<dyn std::error::Error>> {
+pub fn get_user_info(handle: &str) -> Result<APIResponse<UserData>, Box<dyn std::error::Error>> {
     let url = format!(
         "https://codeforces.com/api/user.info?handles={}&checkHistoricHandles=false",
         handle
@@ -73,12 +123,12 @@ pub fn get_user_info(handle: &str) -> Result<UserResponse, Box<dyn std::error::E
     return make_request(&url);
 }
 
-pub fn get_contests() -> Result<ContestResponse, Box<dyn std::error::Error>> {
+pub fn get_contests() -> Result<APIResponse<ContestData>, Box<dyn std::error::Error>> {
     let url = " https://codeforces.com/api/contest.list?gym=false";
     return make_request(&url);
 }
 
-pub fn print_rating_history(response: RatingResponse) {
+pub fn print_rating_history(response: APIResponse<RatingData>) {
     let repeat_count = 119;
     println!("\n User: {}", response.result[0].handle);
     println!("{}", "-".repeat(repeat_count));
@@ -97,14 +147,13 @@ pub fn print_rating_history(response: RatingResponse) {
     println!("{}\n", "-".repeat(repeat_count));
 }
 
-pub fn print_user_info(response: UserResponse) {
+pub fn print_user_info(response: APIResponse<UserData>) {
     let repeat_count = 73;
     println!("{}", "-".repeat(repeat_count));
     println!(
         "| {:<20} | {:<20} | {:>10} | {:>10} |",
         "Handle", "Rank", "Rating", "Max Rating"
     );
-    // println!("{}", "-".repeat(repeat_count));
     for user in response.result {
         println!(
             "| {:<20} | {:<20} | {:>10} | {:>10} |",
@@ -114,7 +163,7 @@ pub fn print_user_info(response: UserResponse) {
     println!("{}", "-".repeat(repeat_count));
 }
 
-pub fn print_contests(response: ContestResponse) {
+pub fn print_contests(response: APIResponse<ContestData>) {
     let repeat_count = 106;
     println!("\n Latest Contests:");
     println!("{}", "-".repeat(repeat_count));
