@@ -27,13 +27,15 @@ cargo build --release
 
 ## Usage
 
-| Option             | Shorthand | Argument Type | Description                       |
+| Option             | Shorthand | Argument Type  | Description                       |
 |--------------------|-----------|----------------|-----------------------------------|
 | `--rating`         | `-r`      | `<handle>`     | Print rating history              |
 | `--info`           | `-i`      | `<handle>`     | Print user's profile information  |
 | `--contests`       | `-c`      | None           | Show latest Codeforces contests   |
 | `--help`           | `-h`      | None           | Show help message                 |
 | `--version`        | `-V`      | None           | Show version                      |
+| `--submissions     | `-s`      | `<handle>`     | Show user's recent submissions    |
+
 ---
 This is an early prototype.
 
