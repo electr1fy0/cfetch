@@ -43,7 +43,6 @@ pub struct UserData {
 #[serde(rename_all = "camelCase")]
 pub struct SubmissionData {
     pub contest_id: i32,
-
     pub creation_time_seconds: i32,
     pub problem: Problem,
     pub verdict: String,
@@ -54,6 +53,7 @@ pub struct SubmissionData {
 pub struct Problem {
     pub name: String,
     pub index: String,
+    pub rating: Option<i32>,
 }
 
 // Make all API requests
@@ -76,12 +76,13 @@ pub fn get_submission_history(
     );
     return make_request(&url);
 }
+
 pub fn print_submission_history(response: APIResponse<SubmissionData>) {
     println!();
     let mut table = Table::new();
     table.add_row(Row::new(vec![
         Cell::new("Contest ID"),
-        Cell::new("Index"),
+        Cell::new("Difficulty"),
         Cell::new("Problem Name"),
         Cell::new("Verdict"),
         Cell::new("Time (IST)"),
@@ -95,9 +96,15 @@ pub fn print_submission_history(response: APIResponse<SubmissionData>) {
             .format("%d-%m-%Y %H-%M")
             .to_string();
 
+        let difficulty: String;
+        match &sub.problem.rating {
+            Some(value) => difficulty = format!("{} ({})", &sub.problem.index, value),
+            None => difficulty = format!("{}: (NA)", &sub.problem.index),
+        }
+
         table.add_row(Row::new(vec![
             Cell::new(&sub.contest_id.to_string()),
-            Cell::new(&sub.problem.index),
+            Cell::new(&difficulty),
             Cell::new(&sub.problem.name),
             Cell::new(&sub.verdict),
             Cell::new(&ist_time),
@@ -106,6 +113,7 @@ pub fn print_submission_history(response: APIResponse<SubmissionData>) {
 
     table.printstd();
 }
+
 pub fn get_rating_history(
     handle: &str,
 ) -> Result<APIResponse<RatingData>, Box<dyn std::error::Error>> {

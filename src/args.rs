@@ -9,7 +9,8 @@ use clap::{ArgGroup, Parser};
 #[command(group(
     ArgGroup::new("mode")
     .required(true)
-    .args(&["rating", "info", "contests", "submissions"])))]
+    .multiple(false)
+    .args(&["rating", "info", "contests", "submissions", "problem" ])))]
 pub struct Args {
     #[arg(short, long)]
     pub rating: Option<String>,
@@ -22,4 +23,6 @@ pub struct Args {
 
     #[arg(short, long)]
     pub submissions: Option<String>,
+    #[arg(short, long)]
+    pub problem: Option<String>,
 }
