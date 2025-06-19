@@ -1,7 +1,5 @@
 # cfetch
 
-**Status:** Work in Progress (WIP)
-
 cfetch is a minimal command-line tool written in Rust that provides quick access to Codeforces user data. Currently, it supports fetching and displaying a user's contest rating history.
 
 Planned as a lightweight toolkit for various Codeforces utilities.
@@ -36,12 +34,8 @@ cargo build --release
 | `--version`        | `-V`      | None           | Show version                      |
 | `--submissions     | `-s`      | `<handle>`     | Show user's recent submissions    |
 
----
-This is an early prototype.
-
 
 # Todo
 - [x] Implement clap
-- [ ] Fetch links to problem A of last 5 contests into a markdown file
-- [ ] CSV output
-- [ ] More detailed User Info
+- [ ] CSV, MD output
+- [ ] More features
