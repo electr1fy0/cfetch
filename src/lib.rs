@@ -46,6 +46,7 @@ pub struct SubmissionData {
     pub creation_time_seconds: i32,
     pub problem: Problem,
     pub verdict: String,
+    pub programming_language: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -85,6 +86,7 @@ pub fn print_submission_history(response: APIResponse<SubmissionData>) {
         Cell::new("Difficulty"),
         Cell::new("Problem Name"),
         Cell::new("Verdict"),
+        Cell::new("Language"),
         Cell::new("Time (IST)"),
     ]));
 
@@ -107,6 +109,7 @@ pub fn print_submission_history(response: APIResponse<SubmissionData>) {
             Cell::new(&difficulty),
             Cell::new(&sub.problem.name),
             Cell::new(&sub.verdict),
+            Cell::new(&sub.programming_language),
             Cell::new(&ist_time),
         ]));
     }
