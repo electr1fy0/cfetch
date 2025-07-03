@@ -22,12 +22,13 @@ const (
 type errMsg error
 
 type model struct {
-	state     screen
-	textinput textinput.Model
-	rating    string
-	info      string
-	contests  table.Model
-	err       error
+	state      screen
+	textinput  textinput.Model
+	rating     string
+	info       table.Model
+	contests   table.Model
+	submission table.Model
+	err        error
 }
 
 func initialModel() model {
@@ -39,7 +40,7 @@ func initialModel() model {
 
 	return model{
 		Login,
-		ti, "", "", table.New(), nil,
+		ti, "", table.New(), table.New(), table.New(), nil,
 	}
 }
 
@@ -53,9 +54,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
+			handle := m.textinput.Value()
 			m.state = Dashboard
-			m.info = data.GetUserInfo(m.textinput.Value())
-			m.rating = data.GetRatingHistory(m.textinput.Value())
+			m.info = data.GetUserInfo(handle)
+			m.rating = data.GetRatingHistory(handle)
+			m.submission = data.GetSubmissionHistory(handle)
 			m.contests = data.GetContests()
 			return m, cmd
 		case tea.KeyEscape:
@@ -77,20 +80,16 @@ func (m model) View() string {
 			))
 
 	case Dashboard:
-		borderStyle := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			Padding(1, 2).
-			Margin(1, 1).
-			BorderForeground(lipgloss.Color("#6C6C6C"))
+		style := lipgloss.NewStyle().Padding(1, 2)
 
-		infoBox := borderStyle.Render(m.info)
-		ratingBox := borderStyle.Render(m.rating)
+		col := lipgloss.JoinVertical(
+			lipgloss.Left,
+			style.Render(m.info.View()),
+			style.Render(m.rating),
+		)
+		col2 := lipgloss.JoinVertical(lipgloss.Left, style.Render(m.contests.View()), style.Render(m.submission.View()))
 
-		contestsBox := m.contests.View() + "\n"
-		topRow := lipgloss.JoinHorizontal(lipgloss.Top, infoBox, contestsBox)
-		layout := lipgloss.JoinVertical(lipgloss.Left, topRow, ratingBox)
-
-		return layout
+		return lipgloss.JoinHorizontal(lipgloss.Top, col, col2)
 	}
 
 	return ""

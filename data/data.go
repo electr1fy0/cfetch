@@ -1,7 +1,6 @@
 package data
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -121,7 +120,7 @@ func MakeContestsTable(apiResp *APIResponse[Contest]) table.Model {
 				Background(lipgloss.Color("#F5F5F5")).
 				Foreground(lipgloss.Color("#333333")).
 				Bold(true).
-				Padding(0, 1).Margin(1, 0).Height(1),
+				Padding(0, 1).Height(1),
 
 			Cell: lipgloss.NewStyle().
 				Padding(0, 1),
@@ -176,7 +175,7 @@ func PrintRatingHistory(apiResp APIResponse[RatingHistory]) {
 	table.Render()
 }
 func PlotRatingHistory(apiResp *APIResponse[RatingHistory]) string {
-	chart := timeserieslinechart.New(60, 18)
+	chart := timeserieslinechart.New(80, 18)
 
 	chart.AxisStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#EBD391"))
 	chart.LabelStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
@@ -187,15 +186,10 @@ func PlotRatingHistory(apiResp *APIResponse[RatingHistory]) string {
 		})
 	}
 	chart.DrawBraille()
-
-	// box := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Padding(1, 2)
-
-	// return box.Render(chart.View())
 	return chart.View()
-	// fmt.Println(box.Render(chart.View()))
 }
 
-func GetUserInfo(handle string) string {
+func GetUserInfo(handle string) table.Model {
 	url := fmt.Sprintf("https://codeforces.com/api/user.info?handles=%s&checkHistoricHandles=false", handle)
 
 	body := Request(url)
@@ -206,32 +200,53 @@ func GetUserInfo(handle string) string {
 		fmt.Println("Error unmarshalling:", err)
 		os.Exit(1)
 	}
-	x := PrintUserInfo(apiResp, handle)
-	// println(x)
+	x := MakeInfoTable(apiResp, handle)
+
 	return x
 }
 
-func PrintUserInfo(apiResp APIResponse[User], handle string) string {
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.Header([]string{"Handle", "Rank", "Rating", "Max Rating"})
+func MakeInfoTable(apiResp APIResponse[User], handle string) table.Model {
+	cols := []table.Column{
+		{Title: "Handle", Width: 20},
+		{Title: "Rank", Width: 25},
+		{Title: "Rating", Width: 10},
+		{Title: "Max Rating", Width: 10},
+	}
+	rows := make([]table.Row, 0, 1)
 
-	for _, user := range apiResp.Result {
-		row := []string{
+	for i, user := range apiResp.Result {
+		row := table.Row{
 			user.Handle,
 			user.Rank,
 			fmt.Sprintf("%d", user.Rating),
 			fmt.Sprintf("%d", user.MaxRating),
 		}
-		table.Append(row)
+		if i == 1 {
+			break
+		}
+		rows = append(rows, row)
+
 	}
 
-	table.Render()
-	return buf.String()
+	t := table.New(table.WithColumns(cols),
+		table.WithRows(rows),
+		table.WithHeight(2),
+		table.WithStyles(
+			table.Styles{
+				Header: lipgloss.NewStyle().
+					Background(lipgloss.Color("#F5F5F5")).
+					Foreground(lipgloss.Color("#333333")).
+					Bold(true).
+					Padding(0, 1),
 
+				Cell: lipgloss.NewStyle().
+					Padding(0, 1),
+			},
+		))
+	return t
 }
 
-func GetSubmissionHistory(handle string) {
+func GetSubmissionHistory(handle string) table.Model {
 	url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=10", handle)
 
 	body := Request(url)
@@ -243,19 +258,21 @@ func GetSubmissionHistory(handle string) {
 		fmt.Println("Error unmarshalling: ", err)
 
 	}
+
+	return MakeSubmissionTable(apiResp, handle)
 }
 
-func PrintSubmissionHistory(apiResp APIResponse[Submission], handle string) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.Header([]string{
-		"Contest ID",
-		"Difficulty",
-		"Problem Name",
-		"Verdict",
-		"Language",
-		"Time",
-	})
+func MakeSubmissionTable(apiResp APIResponse[Submission], handle string) table.Model {
+	cols := []table.Column{
 
+		{Title: "Contest ID", Width: 8},
+		{Title: "Difficulty", Width: 15},
+		{Title: "Problem Name", Width: 20},
+		{Title: "Verdict", Width: 10},
+		// {Title: "Language", Width: 20},
+		{Title: "Time", Width: 15},
+	}
+	var rows []table.Row
 	for _, submission := range apiResp.Result {
 		var difficulty string
 		if submission.Problem.Rating == nil {
@@ -264,17 +281,33 @@ func PrintSubmissionHistory(apiResp APIResponse[Submission], handle string) {
 			difficulty = fmt.Sprintf("%d", submission.Problem.Rating)
 		}
 
-		startTime := time.Unix(submission.CreationTimeSeconds, 0).Local().Format("02 Jan 2006 15:04")
+		startTime := time.Unix(submission.CreationTimeSeconds, 0).Local().Format("02 Jan 2006")
 
-		var row []string = []string{
+		var row []string = table.Row{
 			fmt.Sprintf("%d", submission.ContestID),
 			difficulty,
 			submission.Problem.Name,
 			submission.Verdict,
-			submission.ProgrammingLanguage,
+			// submission.ProgrammingLanguage,
 			startTime,
 		}
-		table.Append(row)
+		rows = append(rows, row)
 	}
-	table.Render()
+	t := table.New(table.WithColumns(cols),
+		table.WithRows(rows),
+		table.WithHeight(10),
+		table.WithStyles(
+			table.Styles{
+				Header: lipgloss.NewStyle().
+					Background(lipgloss.Color("#F5F5F5")).
+					Foreground(lipgloss.Color("#333333")).
+					Bold(true).
+					Padding(0, 1),
+
+				Cell: lipgloss.NewStyle().
+					Padding(0, 1),
+			},
+		))
+	return t
+
 }
