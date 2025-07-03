@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cfetch/model"
+	"github.com/electr1fy0/cfetch/model"
 )
 
 func main() {

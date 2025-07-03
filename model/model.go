@@ -1,9 +1,10 @@
 package model
 
 import (
-	"cfetch/data"
 	"fmt"
 	"os"
+
+	"github.com/electr1fy0/cfetch/data"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
