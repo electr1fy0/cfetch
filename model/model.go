@@ -25,7 +25,8 @@ type errMsg error
 type model struct {
 	state      screen
 	textinput  textinput.Model
-	rating     string
+	rating     table.Model
+	ratingPlot string
 	info       table.Model
 	contests   table.Model
 	submission table.Model
@@ -41,7 +42,7 @@ func initialModel() model {
 
 	return model{
 		Login,
-		ti, "", table.New(), table.New(), table.New(), nil,
+		ti, table.New(), "", table.New(), table.New(), table.New(), nil,
 	}
 }
 
@@ -58,7 +59,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			handle := m.textinput.Value()
 			m.state = Dashboard
 			m.info = data.GetUserInfo(handle)
-			m.rating = data.GetRatingHistory(handle)
+			m.rating, m.ratingPlot = data.GetRatingHistory(handle)
 			m.submission = data.GetSubmissionHistory(handle)
 			m.contests = data.GetContests()
 			return m, cmd
@@ -86,9 +87,9 @@ func (m model) View() string {
 		col := lipgloss.JoinVertical(
 			lipgloss.Left,
 			style.Render(m.info.View()),
-			style.Render(m.rating),
+			style.Render(m.ratingPlot),
 		)
-		col2 := lipgloss.JoinVertical(lipgloss.Left, style.Render(m.contests.View()), style.Render(m.submission.View()))
+		col2 := lipgloss.JoinVertical(lipgloss.Left, style.Render(m.contests.View()), style.Render(m.submission.View()), style.Render(m.rating.View()))
 
 		return lipgloss.JoinHorizontal(lipgloss.Top, col, col2)
 	}

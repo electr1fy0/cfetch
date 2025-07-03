@@ -13,7 +13,6 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/olekukonko/tablewriter"
 )
 
 type APIResponse[T any] struct {
@@ -101,7 +100,7 @@ func MakeContestsTable(apiResp *APIResponse[Contest]) table.Model {
 	// var buf bytes.Buffer
 
 	cols := []table.Column{
-		{Title: "Contest Name", Width: 50},
+		{Title: "Contest Name", Width: 60},
 		{Title: "Start time", Width: 20}} // rm contestid
 
 	var rows []table.Row
@@ -131,7 +130,7 @@ func MakeContestsTable(apiResp *APIResponse[Contest]) table.Model {
 	return t
 }
 
-func GetRatingHistory(handle string) string {
+func GetRatingHistory(handle string) (table.Model, string) {
 	url := fmt.Sprintf("https://codeforces.com/api/user.rating?handle=%s", handle)
 	body := Request(url)
 
@@ -143,25 +142,29 @@ func GetRatingHistory(handle string) string {
 	}
 
 	// PrintRatingHistory(apiResp)
+
 	x := PlotRatingHistory(&apiResp)
-	return x
+	y := MakeRatingTable(apiResp)
+
+	return y, x
 }
 
-func PrintRatingHistory(apiResp APIResponse[RatingHistory]) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.Header([]string{
-		"Contest ID",
-		"Title",
-		// "Handle",
-		"Rank",
-		"Old Rating",
-		"New Rating"})
+func MakeRatingTable(apiResp APIResponse[RatingHistory]) table.Model {
+	cols := []table.Column{
+		{"Contest ID", 10},
+		{"Title", 40},
+		{"Rank", 5},
+		{"Old Rating", 10},
+		{"New Rating", 10},
+	}
+
+	var rows []table.Row
 
 	limit := len(apiResp.Result)
 
 	for i := limit - 1; i >= 0; i-- {
 		ratingItem := apiResp.Result[i]
-		var row []string = []string{
+		var row table.Row = []string{
 			fmt.Sprintf("%d", ratingItem.ContestID),
 			ratingItem.ContestName,
 			// ratingItem.Handle,
@@ -170,10 +173,27 @@ func PrintRatingHistory(apiResp APIResponse[RatingHistory]) {
 			fmt.Sprintf("%d", ratingItem.NewRating),
 		}
 
-		table.Append(row)
+		rows = append(rows, row)
 	}
-	table.Render()
+	t := table.New(table.WithColumns(cols),
+		table.WithRows(rows),
+		table.WithStyles(
+			table.Styles{
+				Header: lipgloss.NewStyle().
+					Background(lipgloss.Color("#F5F5F5")).
+					Foreground(lipgloss.Color("#333333")).
+					Bold(true).
+					Padding(0, 1),
+
+				Cell: lipgloss.NewStyle().
+					Padding(0, 1),
+			},
+		))
+
+	return t
+
 }
+
 func PlotRatingHistory(apiResp *APIResponse[RatingHistory]) string {
 	chart := timeserieslinechart.New(80, 18)
 
@@ -263,11 +283,10 @@ func GetSubmissionHistory(handle string) table.Model {
 
 func MakeSubmissionTable(apiResp APIResponse[Submission], handle string) table.Model {
 	cols := []table.Column{
-
-		{Title: "Contest ID", Width: 8},
-		{Title: "Difficulty", Width: 15},
-		{Title: "Problem Name", Width: 20},
-		{Title: "Verdict", Width: 10},
+		{Title: "Contest ID", Width: 10},
+		{Title: "Difficulty", Width: 10},
+		{Title: "Problem Name", Width: 30},
+		{Title: "Verdict", Width: 12},
 		// {Title: "Language", Width: 20},
 		{Title: "Time", Width: 15},
 	}
