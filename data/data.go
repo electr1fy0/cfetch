@@ -256,7 +256,6 @@ func GetSubmissionHistory(handle string) table.Model {
 	err := json.Unmarshal(body, &apiResp)
 	if err != nil {
 		fmt.Println("Error unmarshalling: ", err)
-
 	}
 
 	return MakeSubmissionTable(apiResp, handle)
@@ -278,7 +277,7 @@ func MakeSubmissionTable(apiResp APIResponse[Submission], handle string) table.M
 		if submission.Problem.Rating == nil {
 			difficulty = "N/A"
 		} else {
-			difficulty = fmt.Sprintf("%d", submission.Problem.Rating)
+			difficulty = fmt.Sprintf("%d", *submission.Problem.Rating)
 		}
 
 		startTime := time.Unix(submission.CreationTimeSeconds, 0).Local().Format("02 Jan 2006")
