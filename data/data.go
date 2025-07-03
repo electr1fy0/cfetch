@@ -1,14 +1,17 @@
 package data
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"time"
+	"unicode/utf8"
 
 	"github.com/NimbleMarkets/ntcharts/linechart/timeserieslinechart"
+	"github.com/charmbracelet/bubbles/table"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/olekukonko/tablewriter"
@@ -75,7 +78,7 @@ func Request(url string) []byte {
 
 }
 
-func GetContests() {
+func GetContests() table.Model {
 	body := Request("https://codeforces.com/api/contest.list?gym=false")
 
 	var apiResp APIResponse[Contest]
@@ -84,26 +87,52 @@ func GetContests() {
 	if err != nil {
 		fmt.Println("Error unmarshalling: ", err)
 	}
-	PrintContests(&apiResp)
+	x := MakeContestsTable(&apiResp)
+	return x
+}
+func truncate(s string, max int) string {
+	if utf8.RuneCountInString(s) <= max {
+		return s
+	}
+	runes := []rune(s)
+	return string(runes[:max]) + "..."
 }
 
-func PrintContests(apiResp *APIResponse[Contest]) {
+func MakeContestsTable(apiResp *APIResponse[Contest]) table.Model {
+	// var buf bytes.Buffer
 
-	table := tablewriter.NewWriter((os.Stdout))
-	table.Header([]string{"Contest ID", "Name", "Start time"})
+	cols := []table.Column{
+		{Title: "Contest Name", Width: 50},
+		{Title: "Start time", Width: 20}} // rm contestid
 
+	var rows []table.Row
 	for _, contest := range apiResp.Result[:min(10, len(apiResp.Result))] {
 		startTime := time.Unix(contest.StartTimeSeconds, 0).Local().Format("02 Jan 2006 15:04")
-		row := []string{
-			fmt.Sprintf("%d", contest.ID), contest.Name, startTime,
-		}
-		table.Append(row)
 
+		var row = table.Row{contest.Name, startTime}
+		rows = append(rows, row)
 	}
-	table.Render()
+	t := table.New(
+		table.WithColumns(cols),
+		table.WithRows(rows),
+		table.WithHeight(7),
+		table.WithStyles(table.Styles{
+			Header: lipgloss.NewStyle().
+				Background(lipgloss.Color("#F5F5F5")).
+				Foreground(lipgloss.Color("#333333")).
+				Bold(true).
+				Padding(0, 1).Margin(1, 0).Height(1),
+
+			Cell: lipgloss.NewStyle().
+				Padding(0, 1),
+		}),
+	)
+	// s := table.DefaultStyles()
+
+	return t
 }
 
-func GetRatingHistory(handle string) {
+func GetRatingHistory(handle string) string {
 	url := fmt.Sprintf("https://codeforces.com/api/user.rating?handle=%s", handle)
 	body := Request(url)
 
@@ -115,8 +144,8 @@ func GetRatingHistory(handle string) {
 	}
 
 	// PrintRatingHistory(apiResp)
-	PlotRatingHistory(&apiResp)
-
+	x := PlotRatingHistory(&apiResp)
+	return x
 }
 
 func PrintRatingHistory(apiResp APIResponse[RatingHistory]) {
@@ -146,8 +175,8 @@ func PrintRatingHistory(apiResp APIResponse[RatingHistory]) {
 	}
 	table.Render()
 }
-func PlotRatingHistory(apiResp *APIResponse[RatingHistory]) {
-	chart := timeserieslinechart.New(80, 20)
+func PlotRatingHistory(apiResp *APIResponse[RatingHistory]) string {
+	chart := timeserieslinechart.New(60, 18)
 
 	chart.AxisStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#EBD391"))
 	chart.LabelStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
@@ -159,12 +188,14 @@ func PlotRatingHistory(apiResp *APIResponse[RatingHistory]) {
 	}
 	chart.DrawBraille()
 
-	box := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Padding(1, 2)
+	// box := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Padding(1, 2)
 
-	fmt.Println(box.Render(chart.View()))
+	// return box.Render(chart.View())
+	return chart.View()
+	// fmt.Println(box.Render(chart.View()))
 }
 
-func GetUserInfo(handle string) {
+func GetUserInfo(handle string) string {
 	url := fmt.Sprintf("https://codeforces.com/api/user.info?handles=%s&checkHistoricHandles=false", handle)
 
 	body := Request(url)
@@ -173,12 +204,16 @@ func GetUserInfo(handle string) {
 	err := json.Unmarshal(body, &apiResp)
 	if err != nil {
 		fmt.Println("Error unmarshalling:", err)
-		return
+		os.Exit(1)
 	}
+	x := PrintUserInfo(apiResp, handle)
+	// println(x)
+	return x
 }
 
-func PrintUserInfo(apiResp APIResponse[User], handle string) {
-	table := tablewriter.NewWriter(os.Stdout)
+func PrintUserInfo(apiResp APIResponse[User], handle string) string {
+	var buf bytes.Buffer
+	table := tablewriter.NewWriter(&buf)
 	table.Header([]string{"Handle", "Rank", "Rating", "Max Rating"})
 
 	for _, user := range apiResp.Result {
@@ -192,6 +227,8 @@ func PrintUserInfo(apiResp APIResponse[User], handle string) {
 	}
 
 	table.Render()
+	return buf.String()
+
 }
 
 func GetSubmissionHistory(handle string) {
@@ -240,8 +277,4 @@ func PrintSubmissionHistory(apiResp APIResponse[Submission], handle string) {
 		table.Append(row)
 	}
 	table.Render()
-}
-
-func init() {
-
 }

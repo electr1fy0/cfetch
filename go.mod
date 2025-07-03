@@ -6,8 +6,9 @@ require github.com/olekukonko/tablewriter v1.0.7
 
 require (
 	github.com/NimbleMarkets/ntcharts v0.3.1 // indirect
+	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/bubbles v0.20.0 // indirect
+	github.com/charmbracelet/bubbles v0.21.0 // indirect
 	github.com/charmbracelet/bubbletea v1.3.5 // indirect
 	github.com/charmbracelet/colorprofile v0.3.0 // indirect
 	github.com/charmbracelet/fang v0.2.0 // indirect
@@ -40,10 +41,12 @@ require (
 	github.com/olekukonko/errors v0.0.0-20250405072817-4e6d85265da6 // indirect
 	github.com/olekukonko/ll v0.0.8 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/sahilm/fuzzy v0.1.1 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
