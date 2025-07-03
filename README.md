@@ -1,45 +1,23 @@
 # cfetch
 
-A command-line tool to fetch Codeforces data directly from your terminal.
-
+A command-line TUI to explore Codeforces data from your terminal.
 
 ## Usage
+Launches an interactive terminal UI to view contests, user info, ratings, submissions, and more.
 
-```bash
-cfetch [command] [--flags]
-```
+## Features
 
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `contests` | Show latest contests |
-| `info [handle]` | Show user info for a given handle |
-| `rating [handle]` | Show rating history for a user |
-| `submissions [handle]` | Show recent submissions for a user |
-| `completion [command]` | Generate shell autocompletion |
-| `help [command]` | Help for any command |
-
-## Examples
-
-```bash
-# Get info about a user
-cfetch info tourist
-
-# Check rating history
-cfetch rating benq
-
-# View recent submissions
-cfetch submissions ecnerwala
-
-# List upcoming contests
-cfetch contests
-```
+- View upcoming and past contests
+- Search user info by handle
+- Plot rating history
+- Browse recent submissions
+- Keyboard-driven interface
+- Fast and minimal
 
 ## Flags
 
-- `-h, --help` - Show help
-- `-v, --version` - Show version
+- `-h, --help` — Show help
+- `-v, --version` — Show version
 
 ## Contributing
 
