@@ -172,11 +172,11 @@ func GetRatingHistory(handle string) (table.Model, []RatingHistory, string) {
 
 func MakeRatingTable(apiResp APIResponse[RatingHistory]) table.Model {
 	cols := []table.Column{
-		{"Contest ID", 10},
-		{"Title", 40},
-		{"Rank", 5},
-		{"Old Rating", 10},
-		{"New Rating", 10},
+		{Title: "Contest ID", Width: 10},
+		{Title: "Title", Width: 40},
+		{Title: "Rank", Width: 5},
+		{Title: "Old Rating", Width: 10},
+		{Title: "New Rating", Width: 10},
 	}
 
 	var rows []table.Row
@@ -209,7 +209,9 @@ func MakeRatingTable(apiResp APIResponse[RatingHistory]) table.Model {
 
 				Cell: lipgloss.NewStyle().
 					Padding(0, 1),
-				Selected: lipgloss.NewStyle().Background(lipgloss.Color("#5E00FF")),
+				Selected: lipgloss.NewStyle().
+					Foreground(lipgloss.Color("#111111")).
+					Background(lipgloss.Color("#A6E3A1")),
 			},
 		))
 
@@ -268,7 +270,6 @@ func MakeInfoTable(apiResp APIResponse[User], handle string) table.Model {
 			break
 		}
 		rows = append(rows, row)
-
 	}
 
 	t := table.New(table.WithColumns(cols),
