@@ -18,31 +18,38 @@ const (
 	Login screen = iota
 	Loading
 	Dashboard
+	ContestAnalysis
 )
 
 type errMsg error
 
 type model struct {
-	state      screen
-	textinput  textinput.Model
-	rating     table.Model
+	state              screen
+	textinput          textinput.Model
+	info               table.Model
+	contests           table.Model
+	ratingTable        table.Model
+	contestSubmissions table.Model
+	submission         table.Model
+	err                error
+	handle             string
+
 	ratingPlot string
-	info       table.Model
-	contests   table.Model
-	submission table.Model
-	err        error
+	ratingData []data.RatingHistory
 }
 
 func initialModel() model {
 	ti := textinput.New()
-	ti.Placeholder = "tourist"
+	ti.Placeholder = "eg. tourist"
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20
 
 	return model{
 		Login,
-		ti, table.New(), "", table.New(), table.New(), table.New(), nil,
+		ti,
+		table.New(), table.New(), table.New(), table.New(), table.New(),
+		nil, "", "", nil,
 	}
 }
 
@@ -56,17 +63,37 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			handle := m.textinput.Value()
+			m.handle = m.textinput.Value()
 			m.state = Dashboard
-			m.info = data.GetUserInfo(handle)
-			m.rating, m.ratingPlot = data.GetRatingHistory(handle)
-			m.submission = data.GetSubmissionHistory(handle)
+			m.info = data.GetUserInfo(m.handle)
+			m.ratingTable, m.ratingData, m.ratingPlot = data.GetRatingHistory(m.handle)
+			m.submission = data.GetSubmissionHistory(m.handle)
 			m.contests = data.GetContests()
 			return m, cmd
 		case tea.KeyEscape:
 			return m, tea.Quit
+		case tea.KeyTab:
+			m.state = ContestAnalysis
+			return m, cmd
+		case tea.KeySpace:
+			if m.state == Dashboard {
+				cursor := m.ratingTable.Cursor()
+				m.ratingTable, cmd = m.ratingTable.Update(msg)
+				if cursor >= 0 && cursor < len(m.ratingData) {
+					selectedContestId := m.ratingData[cursor].ContestID
+					m.contestSubmissions = data.GetContestSubmissions(selectedContestId, m.handle)
+					m.state = ContestAnalysis
+				}
+			}
+			return m, cmd
 		}
+		// switch m.state {
+		// case Dashboard:
+		// 	m.ratingTable.Update(msg)
+		// 	return m, cmd
+		// }
 	}
+	m.ratingTable, cmd = m.ratingTable.Update(msg)
 	m.textinput, cmd = m.textinput.Update(msg)
 	return m, cmd
 }
@@ -89,9 +116,24 @@ func (m model) View() string {
 			style.Render(m.info.View()),
 			style.Render(m.ratingPlot),
 		)
-		col2 := lipgloss.JoinVertical(lipgloss.Left, style.Render(m.contests.View()), style.Render(m.submission.View()), style.Render(m.rating.View()))
+
+		// var baseStyle = lipgloss.NewStyle().
+		// 	BorderStyle(lipgloss.NormalBorder()).
+		// 	BorderForeground(lipgloss.Color("240"))
+
+		col2 := lipgloss.JoinVertical(lipgloss.Left, style.Render(m.contests.View()), style.Render(m.submission.View()), style.Render(m.ratingTable.View()))
 
 		return lipgloss.JoinHorizontal(lipgloss.Top, col, col2)
+
+	case ContestAnalysis:
+		style := lipgloss.NewStyle().Padding(1, 2)
+		s := ""
+		if len(m.contestSubmissions.Rows()) == 0 {
+			s += "no submissions found"
+		} else {
+			s += style.Render(m.contestSubmissions.View())
+		}
+		return s
 	}
 
 	return ""

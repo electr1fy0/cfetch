@@ -42,20 +42,41 @@ type User struct {
 	MaxRating int    `json:"maxRating"`
 	Rating    int    `json:"rating"`
 }
-
-// Following two structs work together
 type Submission struct {
+	ID                  int     `json:"id"`
 	ContestID           int     `json:"contestId"`
 	CreationTimeSeconds int64   `json:"creationTimeSeconds"`
+	RelativeTimeSeconds int64   `json:"relativeTimeSeconds"`
 	Problem             Problem `json:"problem"`
-	Verdict             string  `json:"verdict"`
+	Author              Author  `json:"author"`
 	ProgrammingLanguage string  `json:"programmingLanguage"`
+	Verdict             string  `json:"verdict"`
+	Testset             string  `json:"testset"`
+	PassedTestCount     int     `json:"passedTestCount"`
+	TimeConsumedMillis  int     `json:"timeConsumedMillis"`
+	MemoryConsumedBytes int     `json:"memoryConsumedBytes"`
 }
 
 type Problem struct {
-	Name   string `json:"name"`
-	Index  string `json:"index"`
-	Rating *int   `json:"rating"`
+	ContestID int      `json:"contestId"`
+	Index     string   `json:"index"`
+	Name      string   `json:"name"`
+	Type      string   `json:"type"`
+	Points    float64  `json:"points,omitempty"`
+	Rating    *int     `json:"rating,omitempty"`
+	Tags      []string `json:"tags"`
+}
+
+type Author struct {
+	ContestID        int      `json:"contestId"`
+	Members          []Member `json:"members"`
+	ParticipantType  string   `json:"participantType"`
+	Ghost            bool     `json:"ghost"`
+	StartTimeSeconds *int64   `json:"startTimeSeconds,omitempty"`
+}
+
+type Member struct {
+	Handle string `json:"handle"`
 }
 
 func Request(url string) []byte {
@@ -116,7 +137,7 @@ func MakeContestsTable(apiResp *APIResponse[Contest]) table.Model {
 		table.WithHeight(7),
 		table.WithStyles(table.Styles{
 			Header: lipgloss.NewStyle().
-				Background(lipgloss.Color("#F5F5F5")).
+				Background(lipgloss.Color("#EED49F")).
 				Foreground(lipgloss.Color("#333333")).
 				Bold(true).
 				Padding(0, 1).Height(1),
@@ -130,7 +151,7 @@ func MakeContestsTable(apiResp *APIResponse[Contest]) table.Model {
 	return t
 }
 
-func GetRatingHistory(handle string) (table.Model, string) {
+func GetRatingHistory(handle string) (table.Model, []RatingHistory, string) {
 	url := fmt.Sprintf("https://codeforces.com/api/user.rating?handle=%s", handle)
 	body := Request(url)
 
@@ -146,7 +167,7 @@ func GetRatingHistory(handle string) (table.Model, string) {
 	x := PlotRatingHistory(&apiResp)
 	y := MakeRatingTable(apiResp)
 
-	return y, x
+	return y, apiResp.Result, x
 }
 
 func MakeRatingTable(apiResp APIResponse[RatingHistory]) table.Model {
@@ -177,16 +198,18 @@ func MakeRatingTable(apiResp APIResponse[RatingHistory]) table.Model {
 	}
 	t := table.New(table.WithColumns(cols),
 		table.WithRows(rows),
+		table.WithFocused(true),
 		table.WithStyles(
 			table.Styles{
 				Header: lipgloss.NewStyle().
-					Background(lipgloss.Color("#F5F5F5")).
+					Background(lipgloss.Color("#EED49F")).
 					Foreground(lipgloss.Color("#333333")).
 					Bold(true).
 					Padding(0, 1),
 
 				Cell: lipgloss.NewStyle().
 					Padding(0, 1),
+				Selected: lipgloss.NewStyle().Background(lipgloss.Color("#5E00FF")),
 			},
 		))
 
@@ -254,7 +277,7 @@ func MakeInfoTable(apiResp APIResponse[User], handle string) table.Model {
 		table.WithStyles(
 			table.Styles{
 				Header: lipgloss.NewStyle().
-					Background(lipgloss.Color("#F5F5F5")).
+					Background(lipgloss.Color("#EED49F")).
 					Foreground(lipgloss.Color("#333333")).
 					Bold(true).
 					Padding(0, 1),
@@ -317,7 +340,7 @@ func MakeSubmissionTable(apiResp APIResponse[Submission], handle string) table.M
 		table.WithStyles(
 			table.Styles{
 				Header: lipgloss.NewStyle().
-					Background(lipgloss.Color("#F5F5F5")).
+					Background(lipgloss.Color("#EED49F")).
 					Foreground(lipgloss.Color("#333333")).
 					Bold(true).
 					Padding(0, 1),
@@ -327,5 +350,67 @@ func MakeSubmissionTable(apiResp APIResponse[Submission], handle string) table.M
 			},
 		))
 	return t
+}
 
+func GetContestSubmissions(contestID int, handle string) table.Model {
+	url := fmt.Sprintf("https://codeforces.com/api/contest.status?contestId=%d&handle=%s&from=1&count=10", contestID, handle)
+
+	body := Request(url)
+	var apiResp APIResponse[Submission]
+
+	err := json.Unmarshal(body, &apiResp)
+	if err != nil {
+		fmt.Println("Error unmarshalling contest submissions: ", err)
+	}
+
+	return MakeContestSubmissionTable(apiResp, handle)
+}
+func MakeContestSubmissionTable(apiResp APIResponse[Submission], handle string) table.Model {
+	cols := []table.Column{
+		{Title: "Problem", Width: 10},
+		{Title: "Name", Width: 30},
+		{Title: "Difficulty", Width: 10},
+		{Title: "Verdict", Width: 12},
+		{Title: "Time", Width: 15},
+	}
+
+	var rows []table.Row
+	for _, submission := range apiResp.Result {
+		var difficulty string
+		if submission.Problem.Rating == nil {
+			difficulty = "N/A"
+		} else {
+			difficulty = fmt.Sprintf("%d", *submission.Problem.Rating)
+		}
+
+		problemLabel := fmt.Sprintf("%s%d", submission.Problem.Index, submission.Problem.ContestID)
+		submitTime := time.Unix(submission.CreationTimeSeconds, 0).Local().Format("02 Jan 2006")
+
+		row := table.Row{
+			problemLabel,
+			submission.Problem.Name,
+			difficulty,
+			submission.Verdict,
+			submitTime,
+		}
+		rows = append(rows, row)
+	}
+
+	t := table.New(
+		table.WithColumns(cols),
+		table.WithRows(rows),
+		table.WithHeight(10),
+		table.WithStyles(table.Styles{
+			Header: lipgloss.NewStyle().
+				Background(lipgloss.Color("#EED49F")).
+				Foreground(lipgloss.Color("#333333")).
+				Bold(true).
+				Padding(0, 1),
+			Cell: lipgloss.NewStyle().
+				Padding(0, 1),
+			// Selected: lipgloss.NewStyle().Background(lipgloss.Color("6")),
+		}),
+	)
+
+	return t
 }
