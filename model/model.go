@@ -49,7 +49,7 @@ func getUserData(handle string) tea.Cmd {
 	return func() tea.Msg {
 		infoTable, _ := data.GetUserInfo(handle)
 		ratingTable, ratingData, ratingPlot := data.GetRatingHistory(handle)
-		submissionTable, submissionList := data.GetSubmissionHistory(handle)
+		submissionTable, submissionList, submissionPlot := data.GetSubmissionHistory(handle)
 		contestsTable, contestList := data.GetContests()
 
 		return loadedMsg{
@@ -59,6 +59,7 @@ func getUserData(handle string) tea.Cmd {
 			submission:            submissionTable,
 			contests:              contestsTable,
 			ratingData:            ratingData,
+			submissionPlot:        submissionPlot,
 			submissionList:        submissionList,
 			contestList:           contestList,
 			contestSubmissionList: nil,
@@ -177,6 +178,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.contests = msg.contests
 		m.state = Dashboard
 		m.contestList = msg.contestList
+		m.submissionPlot = msg.submissionPlot
 		return m, nil
 	case spinner.TickMsg:
 		m.spinner, cmd = m.spinner.Update(msg)

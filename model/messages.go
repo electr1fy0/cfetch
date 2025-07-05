@@ -17,4 +17,5 @@ type loadedMsg struct {
 	contestSubmissionList []data.Submission
 	contestList           []data.Contest
 	submissionList        []data.Submission
+	submissionPlot        string
 }

@@ -30,6 +30,7 @@ type model struct {
 	score                 int
 	maxScore              int
 	ratingPlot            string
+	submissionPlot        string
 	ratingData            []data.RatingHistory
 	contestSubmissionList []data.Submission
 	contestList           []data.Contest
