@@ -270,9 +270,9 @@ func GetSubmissionHistory(handle string) table.Model {
 	url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=10", handle)
 
 	data, err := FetchAPI[Submission](url)
-
 	if err != nil {
 		fmt.Println("Error unmarshalling: ", err)
+		os.Exit(1)
 	}
 
 	return MakeSubmissionTable(data)
@@ -315,17 +315,14 @@ func MakeSubmissionTable(result []Submission) table.Model {
 func GetContestSubmissions(contestID int, handle string) table.Model {
 	url := fmt.Sprintf("https://codeforces.com/api/contest.status?contestId=%d&handle=%s&from=1&count=10", contestID, handle)
 
-	body := Request(url)
-	var apiResp APIResponse[Submission]
-
-	err := json.Unmarshal(body, &apiResp)
+	data, err := FetchAPI[Submission](url)
 	if err != nil {
-		fmt.Println("Error unmarshalling contest submissions: ", err)
+		fmt.Println("Error unmarshalling: ", err)
+		os.Exit(1)
 	}
-
-	return MakeContestSubmissionTable(apiResp, handle)
+	return MakeContestSubmissionTable(data)
 }
-func MakeContestSubmissionTable(apiResp APIResponse[Submission], handle string) table.Model {
+func MakeContestSubmissionTable(result []Submission) table.Model {
 	cols := []table.Column{
 		{Title: "Problem", Width: 10},
 		{Title: "Name", Width: 30},
@@ -335,7 +332,7 @@ func MakeContestSubmissionTable(apiResp APIResponse[Submission], handle string) 
 	}
 
 	var rows []table.Row
-	for _, submission := range apiResp.Result {
+	for _, submission := range result {
 		var difficulty string
 		if submission.Problem.Rating == nil {
 			difficulty = "N/A"
@@ -356,21 +353,6 @@ func MakeContestSubmissionTable(apiResp APIResponse[Submission], handle string) 
 		rows = append(rows, row)
 	}
 
-	t := table.New(
-		table.WithColumns(cols),
-		table.WithRows(rows),
-		table.WithHeight(10),
-		table.WithStyles(table.Styles{
-			Header: lipgloss.NewStyle().
-				Background(lipgloss.Color("#EED49F")).
-				Foreground(lipgloss.Color("#333333")).
-				Bold(true).
-				Padding(0, 1),
-			Cell: lipgloss.NewStyle().
-				Padding(0, 1),
-			// Selected: lipgloss.NewStyle().Background(lipgloss.Color("6")),
-		}),
-	)
-
+	t := MakeTable(cols, rows, false)
 	return t
 }
