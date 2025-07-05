@@ -94,21 +94,29 @@ func Request(url string) []byte {
 		os.Exit(1)
 	}
 	return body
+}
 
+func FetchAPI[T any](url string) ([]T, error) {
+	body := Request(url)
+	var apiResp APIResponse[T]
+
+	if err := json.Unmarshal(body, &apiResp); err != nil {
+		return nil, err
+	}
+
+	return apiResp.Result, nil
 }
 
 func GetContests() table.Model {
-	body := Request("https://codeforces.com/api/contest.list?gym=false")
+	data, err := FetchAPI[Contest]("https://codeforces.com/api/contest.list?gym=false")
 
-	var apiResp APIResponse[Contest]
-
-	err := json.Unmarshal(body, &apiResp)
 	if err != nil {
 		fmt.Println("Error unmarshalling: ", err)
 	}
-	x := MakeContestsTable(&apiResp)
+	x := MakeContestsTable(data)
 	return x
 }
+
 func truncate(s string, max int) string {
 	if utf8.RuneCountInString(s) <= max {
 		return s
@@ -117,24 +125,12 @@ func truncate(s string, max int) string {
 	return string(runes[:max]) + "..."
 }
 
-func MakeContestsTable(apiResp *APIResponse[Contest]) table.Model {
-	// var buf bytes.Buffer
-
-	cols := []table.Column{
-		{Title: "Contest Name", Width: 60},
-		{Title: "Start time", Width: 20}} // rm contestid
-
-	var rows []table.Row
-	for _, contest := range apiResp.Result[:min(10, len(apiResp.Result))] {
-		startTime := time.Unix(contest.StartTimeSeconds, 0).Local().Format("02 Jan 2006 15:04")
-
-		var row = table.Row{contest.Name, startTime}
-		rows = append(rows, row)
-	}
-	t := table.New(
+func MakeTable(cols []table.Column, rows []table.Row, focus bool) table.Model {
+	return table.New(
 		table.WithColumns(cols),
 		table.WithRows(rows),
 		table.WithHeight(7),
+		table.WithFocused(focus),
 		table.WithStyles(table.Styles{
 			Header: lipgloss.NewStyle().
 				Background(lipgloss.Color("#EED49F")).
@@ -144,33 +140,44 @@ func MakeContestsTable(apiResp *APIResponse[Contest]) table.Model {
 
 			Cell: lipgloss.NewStyle().
 				Padding(0, 1),
+			Selected: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#111111")).
+				Background(lipgloss.Color("#A6E3A1")),
 		}),
 	)
-	// s := table.DefaultStyles()
+
+}
+
+func MakeContestsTable(result []Contest) table.Model {
+	// var buf bytes.Buffer // for writing to bytes instead of stdout for other use cases
+
+	cols := []table.Column{
+		{Title: "Contest Name", Width: 60},
+		{Title: "Start time", Width: 20}} // rm contestid
+
+	var rows []table.Row
+	for _, contest := range result[:min(10, len(result))] {
+		startTime := time.Unix(contest.StartTimeSeconds, 0).Local().Format("02 Jan 2006 15:04")
+		var row = table.Row{contest.Name, startTime}
+		rows = append(rows, row)
+	}
+	t := MakeTable(cols, rows, false)
 
 	return t
 }
 
 func GetRatingHistory(handle string) (table.Model, []RatingHistory, string) {
 	url := fmt.Sprintf("https://codeforces.com/api/user.rating?handle=%s", handle)
-	body := Request(url)
-
-	var apiResp APIResponse[RatingHistory]
-	err := json.Unmarshal(body, &apiResp)
-
-	if err != nil {
-		fmt.Println("Error umarshalling: ", err)
-	}
+	data, _ := FetchAPI[RatingHistory](url)
 
 	// PrintRatingHistory(apiResp)
+	x := PlotRatingHistory(data)
+	y := MakeRatingTable(data)
 
-	x := PlotRatingHistory(&apiResp)
-	y := MakeRatingTable(apiResp)
-
-	return y, apiResp.Result, x
+	return y, data, x
 }
 
-func MakeRatingTable(apiResp APIResponse[RatingHistory]) table.Model {
+func MakeRatingTable(result []RatingHistory) table.Model {
 	cols := []table.Column{
 		{Title: "Contest ID", Width: 10},
 		{Title: "Title", Width: 40},
@@ -181,10 +188,10 @@ func MakeRatingTable(apiResp APIResponse[RatingHistory]) table.Model {
 
 	var rows []table.Row
 
-	limit := len(apiResp.Result)
+	limit := len(result)
 
 	for i := limit - 1; i >= 0; i-- {
-		ratingItem := apiResp.Result[i]
+		ratingItem := result[i]
 		var row table.Row = []string{
 			fmt.Sprintf("%d", ratingItem.ContestID),
 			ratingItem.ContestName,
@@ -196,35 +203,18 @@ func MakeRatingTable(apiResp APIResponse[RatingHistory]) table.Model {
 
 		rows = append(rows, row)
 	}
-	t := table.New(table.WithColumns(cols),
-		table.WithRows(rows),
-		table.WithFocused(true),
-		table.WithStyles(
-			table.Styles{
-				Header: lipgloss.NewStyle().
-					Background(lipgloss.Color("#EED49F")).
-					Foreground(lipgloss.Color("#333333")).
-					Bold(true).
-					Padding(0, 1),
-
-				Cell: lipgloss.NewStyle().
-					Padding(0, 1),
-				Selected: lipgloss.NewStyle().
-					Foreground(lipgloss.Color("#111111")).
-					Background(lipgloss.Color("#A6E3A1")),
-			},
-		))
+	t := MakeTable(cols, rows, true)
 
 	return t
 
 }
 
-func PlotRatingHistory(apiResp *APIResponse[RatingHistory]) string {
+func PlotRatingHistory(result []RatingHistory) string {
 	chart := timeserieslinechart.New(80, 18)
 
 	chart.AxisStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#EBD391"))
 	chart.LabelStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
-	for _, item := range apiResp.Result {
+	for _, item := range result {
 		chart.Push(timeserieslinechart.TimePoint{
 			Time:  time.Unix(item.RatingUpdateTimeSeconds, 0),
 			Value: float64(item.NewRating),
@@ -272,40 +262,23 @@ func MakeInfoTable(apiResp APIResponse[User], handle string) table.Model {
 		rows = append(rows, row)
 	}
 
-	t := table.New(table.WithColumns(cols),
-		table.WithRows(rows),
-		table.WithHeight(2),
-		table.WithStyles(
-			table.Styles{
-				Header: lipgloss.NewStyle().
-					Background(lipgloss.Color("#EED49F")).
-					Foreground(lipgloss.Color("#333333")).
-					Bold(true).
-					Padding(0, 1),
-
-				Cell: lipgloss.NewStyle().
-					Padding(0, 1),
-			},
-		))
+	t := MakeTable(cols, rows, false)
 	return t
 }
 
 func GetSubmissionHistory(handle string) table.Model {
 	url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=10", handle)
 
-	body := Request(url)
+	data, err := FetchAPI[Submission](url)
 
-	var apiResp APIResponse[Submission]
-
-	err := json.Unmarshal(body, &apiResp)
 	if err != nil {
 		fmt.Println("Error unmarshalling: ", err)
 	}
 
-	return MakeSubmissionTable(apiResp, handle)
+	return MakeSubmissionTable(data)
 }
 
-func MakeSubmissionTable(apiResp APIResponse[Submission], handle string) table.Model {
+func MakeSubmissionTable(result []Submission) table.Model {
 	cols := []table.Column{
 		{Title: "Contest ID", Width: 10},
 		{Title: "Difficulty", Width: 10},
@@ -315,7 +288,7 @@ func MakeSubmissionTable(apiResp APIResponse[Submission], handle string) table.M
 		{Title: "Time", Width: 15},
 	}
 	var rows []table.Row
-	for _, submission := range apiResp.Result {
+	for _, submission := range result {
 		var difficulty string
 		if submission.Problem.Rating == nil {
 			difficulty = "N/A"
@@ -335,21 +308,7 @@ func MakeSubmissionTable(apiResp APIResponse[Submission], handle string) table.M
 		}
 		rows = append(rows, row)
 	}
-	t := table.New(table.WithColumns(cols),
-		table.WithRows(rows),
-		table.WithHeight(10),
-		table.WithStyles(
-			table.Styles{
-				Header: lipgloss.NewStyle().
-					Background(lipgloss.Color("#EED49F")).
-					Foreground(lipgloss.Color("#333333")).
-					Bold(true).
-					Padding(0, 1),
-
-				Cell: lipgloss.NewStyle().
-					Padding(0, 1),
-			},
-		))
+	t := MakeTable(cols, rows, false)
 	return t
 }
 
