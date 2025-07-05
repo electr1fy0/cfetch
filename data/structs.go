@@ -49,7 +49,7 @@ type Problem struct {
 	Name      string   `json:"name"`
 	Type      string   `json:"type"`
 	Points    float64  `json:"points,omitempty"`
-	Rating    *int     `json:"rating,omitempty"`
+	Rating    *int     `json:"rating"`
 	Tags      []string `json:"tags"`
 }
 

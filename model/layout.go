@@ -33,6 +33,7 @@ func (m model) View() string {
 			lipgloss.Left,
 			style.Render(m.info.View()),
 			style.Render(m.ratingPlot),
+			style.Render(m.submissionPlot),
 		)
 
 		// var baseStyle = lipgloss.NewStyle().

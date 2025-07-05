@@ -9,6 +9,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/NimbleMarkets/ntcharts/barchart"
 	"github.com/NimbleMarkets/ntcharts/linechart/timeserieslinechart"
 	"github.com/charmbracelet/bubbles/table"
 
@@ -120,8 +121,8 @@ func GetUserInfo(handle string) (table.Model, []User) {
 	return x, data
 }
 
-func GetSubmissionHistory(handle string) (table.Model, []Submission) {
-	url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=10", handle)
+func GetSubmissionHistory(handle string) (table.Model, []Submission, string) {
+	url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s", handle)
 
 	data, err := FetchAPI[Submission](url)
 	if err != nil {
@@ -129,11 +130,76 @@ func GetSubmissionHistory(handle string) (table.Model, []Submission) {
 		os.Exit(1)
 	}
 
-	return MakeSubmissionTable(data), data
+	return MakeSubmissionTable(data), data, MakeSubmissionDistributionChart(data)
 }
 
+func MakeSubmissionDistributionChart(result []Submission) string {
+
+	ratingRanges := []struct {
+		min   int
+		max   int
+		label string
+		color string
+	}{
+		{800, 1199, "800-1199", "10"},   // green - newbie/pupil
+		{1200, 1599, "1200-1599", "14"}, // cyan - specialist
+		{1600, 1899, "1600-1899", "4"},  // blue - expert
+		{1900, 2199, "1900-2199", "5"},  // purple - candidate master
+		{2200, 2499, "2200-2499", "11"}, // yellow - master
+		{2500, 2999, "2500-2999", "9"},  // red - international master
+		{3000, 3500, "3000+", "1"},      // dark red - grandmaster+
+	}
+
+	counts := make(map[string]int)
+	totalSubmissions := 0
+
+	for _, submission := range result {
+
+		if submission.Problem.Rating == nil {
+			continue
+		}
+
+		rating := *submission.Problem.Rating
+		totalSubmissions++
+
+		for _, rng := range ratingRanges {
+			if rating >= rng.min && (rng.label == "3000+" || rating <= rng.max) {
+				counts[rng.label]++
+				break
+			}
+		}
+	}
+
+	var barData []barchart.BarData
+
+	for _, rng := range ratingRanges {
+		count := counts[rng.label]
+		if count > 0 {
+			percentage := float64(count) / float64(totalSubmissions) * 100
+
+			barData = append(barData, barchart.BarData{
+				Label: rng.label,
+				Values: []barchart.BarValue{
+					{
+						fmt.Sprintf("%d (%.1f%%)", count, percentage),
+						float64(count),
+						lipgloss.NewStyle().Foreground(lipgloss.Color(rng.color)),
+					},
+				},
+			})
+		}
+	}
+
+	// Create and configure the chart
+	bc := barchart.New(60, 12)
+	bc.PushAll(barData)
+	bc.Draw()
+
+	return fmt.Sprintf("Problem Difficulty Distribution (Total: %d)\n%s",
+		totalSubmissions, bc.View())
+}
 func GetContestSubmissions(contestID int, handle string) (table.Model, []Submission) {
-	url := fmt.Sprintf("https://codeforces.com/api/contest.status?contestId=%d&handle=%s&from=1&count=10", contestID, handle)
+	url := fmt.Sprintf("https://codeforces.com/api/contest.status?contestId=%d&handle=%s&from=1&count=20", contestID, handle)
 
 	data, err := FetchAPI[Submission](url)
 	if err != nil {
