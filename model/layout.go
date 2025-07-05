@@ -51,6 +51,7 @@ func (m model) View() string {
 		} else {
 			s += style.Render(m.contestSubmissions.View())
 		}
+		s += fmt.Sprintf("\n\n\n Contest Score: %d / %d", m.score, m.maxScore)
 		return s
 	}
 

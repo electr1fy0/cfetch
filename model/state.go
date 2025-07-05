@@ -17,17 +17,21 @@ const (
 )
 
 type model struct {
-	state              screen
-	textinput          textinput.Model
-	info               table.Model
-	contests           table.Model
-	ratingTable        table.Model
-	contestSubmissions table.Model
-	submission         table.Model
-	err                error
-	handle             string
-	spinner            spinner.Model
-
-	ratingPlot string
-	ratingData []data.RatingHistory
+	state                 screen
+	textinput             textinput.Model
+	info                  table.Model
+	contests              table.Model
+	ratingTable           table.Model
+	contestSubmissions    table.Model
+	submission            table.Model
+	err                   error
+	handle                string
+	spinner               spinner.Model
+	score                 int
+	maxScore              int
+	ratingPlot            string
+	ratingData            []data.RatingHistory
+	contestSubmissionList []data.Submission
+	contestList           []data.Contest
+	submissionList        []data.Submission
 }

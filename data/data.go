@@ -15,70 +15,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type APIResponse[T any] struct {
-	Status string `json:"status"`
-	Result []T    `json:"result"`
-}
-
-type Contest struct {
-	ID               int    `json:"id"`
-	Name             string `json:"name"`
-	StartTimeSeconds int64  `json:"startTimeSeconds"`
-}
-
-type RatingHistory struct {
-	ContestID               int    `json:"contestID"`
-	ContestName             string `json:"contestName"`
-	Rank                    int    `json:"rank"`
-	Handle                  string `json:"handle"`
-	OldRating               int    `json:"oldRating"`
-	NewRating               int    `json:"newRating"`
-	RatingUpdateTimeSeconds int64  `json:"ratingUpdateTimeSeconds"`
-}
-
-type User struct {
-	Rank      string `json:"rank"`
-	Handle    string `json:"handle"`
-	MaxRating int    `json:"maxRating"`
-	Rating    int    `json:"rating"`
-}
-type Submission struct {
-	ID                  int     `json:"id"`
-	ContestID           int     `json:"contestId"`
-	CreationTimeSeconds int64   `json:"creationTimeSeconds"`
-	RelativeTimeSeconds int64   `json:"relativeTimeSeconds"`
-	Problem             Problem `json:"problem"`
-	Author              Author  `json:"author"`
-	ProgrammingLanguage string  `json:"programmingLanguage"`
-	Verdict             string  `json:"verdict"`
-	Testset             string  `json:"testset"`
-	PassedTestCount     int     `json:"passedTestCount"`
-	TimeConsumedMillis  int     `json:"timeConsumedMillis"`
-	MemoryConsumedBytes int     `json:"memoryConsumedBytes"`
-}
-
-type Problem struct {
-	ContestID int      `json:"contestId"`
-	Index     string   `json:"index"`
-	Name      string   `json:"name"`
-	Type      string   `json:"type"`
-	Points    float64  `json:"points,omitempty"`
-	Rating    *int     `json:"rating,omitempty"`
-	Tags      []string `json:"tags"`
-}
-
-type Author struct {
-	ContestID        int      `json:"contestId"`
-	Members          []Member `json:"members"`
-	ParticipantType  string   `json:"participantType"`
-	Ghost            bool     `json:"ghost"`
-	StartTimeSeconds *int64   `json:"startTimeSeconds,omitempty"`
-}
-
-type Member struct {
-	Handle string `json:"handle"`
-}
-
 func Request(url string) []byte {
 	res, err := http.Get(url)
 	if err != nil {
@@ -107,24 +43,6 @@ func FetchAPI[T any](url string) ([]T, error) {
 	return apiResp.Result, nil
 }
 
-func GetContests() table.Model {
-	data, err := FetchAPI[Contest]("https://codeforces.com/api/contest.list?gym=false")
-
-	if err != nil {
-		fmt.Println("Error unmarshalling: ", err)
-	}
-	x := MakeContestsTable(data)
-	return x
-}
-
-func truncate(s string, max int) string {
-	if utf8.RuneCountInString(s) <= max {
-		return s
-	}
-	runes := []rune(s)
-	return string(runes[:max]) + "..."
-}
-
 func MakeTable(cols []table.Column, rows []table.Row, focus bool) table.Model {
 	return table.New(
 		table.WithColumns(cols),
@@ -146,6 +64,16 @@ func MakeTable(cols []table.Column, rows []table.Row, focus bool) table.Model {
 		}),
 	)
 
+}
+
+func GetContests() (table.Model, []Contest) {
+	data, err := FetchAPI[Contest]("https://codeforces.com/api/contest.list?gym=false")
+
+	if err != nil {
+		fmt.Println("Error unmarshalling: ", err)
+	}
+	x := MakeContestsTable(data)
+	return x, data
 }
 
 func MakeContestsTable(result []Contest) table.Model {
@@ -170,11 +98,110 @@ func GetRatingHistory(handle string) (table.Model, []RatingHistory, string) {
 	url := fmt.Sprintf("https://codeforces.com/api/user.rating?handle=%s", handle)
 	data, _ := FetchAPI[RatingHistory](url)
 
-	// PrintRatingHistory(apiResp)
+	for i, j := 0, len(data)-1; i < j; i, j = i+1, j-1 {
+		data[i], data[j] = data[j], data[i]
+	}
 	x := PlotRatingHistory(data)
 	y := MakeRatingTable(data)
 
 	return y, data, x
+}
+
+func GetUserInfo(handle string) (table.Model, []User) {
+	url := fmt.Sprintf("https://codeforces.com/api/user.info?handles=%s&checkHistoricHandles=false", handle)
+
+	data, err := FetchAPI[User](url)
+	if err != nil {
+		fmt.Println("Error fetching user info: ", err)
+		os.Exit(1)
+	}
+	x := MakeInfoTable(data)
+
+	return x, data
+}
+
+func GetSubmissionHistory(handle string) (table.Model, []Submission) {
+	url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=10", handle)
+
+	data, err := FetchAPI[Submission](url)
+	if err != nil {
+		fmt.Println("Error unmarshalling: ", err)
+		os.Exit(1)
+	}
+
+	return MakeSubmissionTable(data), data
+}
+
+func GetContestSubmissions(contestID int, handle string) (table.Model, []Submission) {
+	url := fmt.Sprintf("https://codeforces.com/api/contest.status?contestId=%d&handle=%s&from=1&count=10", contestID, handle)
+
+	data, err := FetchAPI[Submission](url)
+	if err != nil {
+		fmt.Println("Error unmarshalling: ", err)
+		os.Exit(1)
+	}
+	return MakeContestSubmissionTable(data), data
+}
+
+func MakeInfoTable(result []User) table.Model {
+	cols := []table.Column{
+		{Title: "Handle", Width: 20},
+		{Title: "Rank", Width: 25},
+		{Title: "Rating", Width: 10},
+		{Title: "Max Rating", Width: 10},
+	}
+	rows := make([]table.Row, 0, 1)
+
+	for i, user := range result {
+		row := table.Row{
+			user.Handle,
+			user.Rank,
+			fmt.Sprintf("%d", user.Rating),
+			fmt.Sprintf("%d", user.MaxRating),
+		}
+		if i == 1 {
+			break
+		}
+		rows = append(rows, row)
+	}
+
+	t := MakeTable(cols, rows, false)
+	return t
+}
+
+func MakeContestSubmissionTable(result []Submission) table.Model {
+	cols := []table.Column{
+		{Title: "Problem", Width: 10},
+		{Title: "Name", Width: 30},
+		{Title: "Difficulty", Width: 10},
+		{Title: "Verdict", Width: 12},
+		{Title: "Time", Width: 15},
+	}
+
+	var rows []table.Row
+	for _, submission := range result {
+		var difficulty string
+		if submission.Problem.Rating == nil {
+			difficulty = "N/A"
+		} else {
+			difficulty = fmt.Sprintf("%d", *submission.Problem.Rating)
+		}
+
+		problemLabel := fmt.Sprintf("%s%d", submission.Problem.Index, submission.Problem.ContestID)
+		submitTime := time.Unix(submission.CreationTimeSeconds, 0).Local().Format("02 Jan 2006")
+
+		row := table.Row{
+			problemLabel,
+			submission.Problem.Name,
+			difficulty,
+			submission.Verdict,
+			submitTime,
+		}
+		rows = append(rows, row)
+	}
+
+	t := MakeTable(cols, rows, false)
+	return t
 }
 
 func MakeRatingTable(result []RatingHistory) table.Model {
@@ -190,7 +217,7 @@ func MakeRatingTable(result []RatingHistory) table.Model {
 
 	limit := len(result)
 
-	for i := limit - 1; i >= 0; i-- {
+	for i := 0; i < limit; i++ {
 		ratingItem := result[i]
 		var row table.Row = []string{
 			fmt.Sprintf("%d", ratingItem.ContestID),
@@ -224,58 +251,12 @@ func PlotRatingHistory(result []RatingHistory) string {
 	return chart.View()
 }
 
-func GetUserInfo(handle string) table.Model {
-	url := fmt.Sprintf("https://codeforces.com/api/user.info?handles=%s&checkHistoricHandles=false", handle)
-
-	body := Request(url)
-
-	var apiResp APIResponse[User]
-	err := json.Unmarshal(body, &apiResp)
-	if err != nil {
-		fmt.Println("Error unmarshalling:", err)
-		os.Exit(1)
+func truncate(s string, max int) string {
+	if utf8.RuneCountInString(s) <= max {
+		return s
 	}
-	x := MakeInfoTable(apiResp, handle)
-
-	return x
-}
-
-func MakeInfoTable(apiResp APIResponse[User], handle string) table.Model {
-	cols := []table.Column{
-		{Title: "Handle", Width: 20},
-		{Title: "Rank", Width: 25},
-		{Title: "Rating", Width: 10},
-		{Title: "Max Rating", Width: 10},
-	}
-	rows := make([]table.Row, 0, 1)
-
-	for i, user := range apiResp.Result {
-		row := table.Row{
-			user.Handle,
-			user.Rank,
-			fmt.Sprintf("%d", user.Rating),
-			fmt.Sprintf("%d", user.MaxRating),
-		}
-		if i == 1 {
-			break
-		}
-		rows = append(rows, row)
-	}
-
-	t := MakeTable(cols, rows, false)
-	return t
-}
-
-func GetSubmissionHistory(handle string) table.Model {
-	url := fmt.Sprintf("https://codeforces.com/api/user.status?handle=%s&from=1&count=10", handle)
-
-	data, err := FetchAPI[Submission](url)
-	if err != nil {
-		fmt.Println("Error unmarshalling: ", err)
-		os.Exit(1)
-	}
-
-	return MakeSubmissionTable(data)
+	runes := []rune(s)
+	return string(runes[:max]) + "..."
 }
 
 func MakeSubmissionTable(result []Submission) table.Model {
@@ -308,51 +289,6 @@ func MakeSubmissionTable(result []Submission) table.Model {
 		}
 		rows = append(rows, row)
 	}
-	t := MakeTable(cols, rows, false)
-	return t
-}
-
-func GetContestSubmissions(contestID int, handle string) table.Model {
-	url := fmt.Sprintf("https://codeforces.com/api/contest.status?contestId=%d&handle=%s&from=1&count=10", contestID, handle)
-
-	data, err := FetchAPI[Submission](url)
-	if err != nil {
-		fmt.Println("Error unmarshalling: ", err)
-		os.Exit(1)
-	}
-	return MakeContestSubmissionTable(data)
-}
-func MakeContestSubmissionTable(result []Submission) table.Model {
-	cols := []table.Column{
-		{Title: "Problem", Width: 10},
-		{Title: "Name", Width: 30},
-		{Title: "Difficulty", Width: 10},
-		{Title: "Verdict", Width: 12},
-		{Title: "Time", Width: 15},
-	}
-
-	var rows []table.Row
-	for _, submission := range result {
-		var difficulty string
-		if submission.Problem.Rating == nil {
-			difficulty = "N/A"
-		} else {
-			difficulty = fmt.Sprintf("%d", *submission.Problem.Rating)
-		}
-
-		problemLabel := fmt.Sprintf("%s%d", submission.Problem.Index, submission.Problem.ContestID)
-		submitTime := time.Unix(submission.CreationTimeSeconds, 0).Local().Format("02 Jan 2006")
-
-		row := table.Row{
-			problemLabel,
-			submission.Problem.Name,
-			difficulty,
-			submission.Verdict,
-			submitTime,
-		}
-		rows = append(rows, row)
-	}
-
 	t := MakeTable(cols, rows, false)
 	return t
 }

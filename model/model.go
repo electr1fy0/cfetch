@@ -1,6 +1,9 @@
 package model
 
 import (
+	"fmt"
+	"sort"
+
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -19,10 +22,22 @@ func InitialModel() model {
 	s.Spinner = spinner.Dot
 
 	return model{
-		Login,
-		ti,
-		table.New(), table.New(), table.New(), table.New(), table.New(),
-		nil, "", s, "", nil,
+		state:                 Login,
+		textinput:             ti,
+		info:                  table.New(),
+		contests:              table.New(),
+		ratingTable:           table.New(),
+		contestSubmissions:    table.New(),
+		submission:            table.New(),
+		err:                   nil,
+		handle:                "",
+		spinner:               s,
+		score:                 0,
+		ratingPlot:            "",
+		ratingData:            nil,
+		contestSubmissionList: nil,
+		contestList:           nil,
+		submissionList:        nil,
 	}
 }
 
@@ -32,20 +47,97 @@ func (m model) Init() tea.Cmd {
 
 func getUserData(handle string) tea.Cmd {
 	return func() tea.Msg {
-		info := data.GetUserInfo(handle)
+		infoTable, _ := data.GetUserInfo(handle)
 		ratingTable, ratingData, ratingPlot := data.GetRatingHistory(handle)
-		submission := data.GetSubmissionHistory(handle)
-		contests := data.GetContests()
+		submissionTable, submissionList := data.GetSubmissionHistory(handle)
+		contestsTable, contestList := data.GetContests()
 
 		return loadedMsg{
-			info,
-			ratingTable,
-			ratingData,
-			ratingPlot,
-			submission,
-			contests,
+			info:                  infoTable,
+			ratingTable:           ratingTable,
+			ratingPlot:            ratingPlot,
+			submission:            submissionTable,
+			contests:              contestsTable,
+			ratingData:            ratingData,
+			submissionList:        submissionList,
+			contestList:           contestList,
+			contestSubmissionList: nil,
 		}
 	}
+}
+
+func (m model) calculateScore(id int) (int, int) {
+	var contestStart, contestEnd, contestDuration int64
+
+	for _, c := range m.contestList {
+		if c.ID == id {
+			contestStart = c.StartTimeSeconds
+			contestDuration = c.DurationSeconds
+			contestEnd = contestStart + contestDuration
+			break
+		}
+	}
+
+	if contestDuration == 0 {
+		return 0, 0
+	}
+
+	problemMap := map[string]*ProblemResult{}
+
+	for _, sub := range m.contestSubmissionList {
+		if sub.CreationTimeSeconds < contestStart || sub.CreationTimeSeconds > contestEnd {
+			continue
+		}
+
+		key := fmt.Sprintf("%s%d", sub.Problem.Index, sub.Problem.ContestID)
+
+		if _, ok := problemMap[key]; !ok {
+			problemMap[key] = &ProblemResult{Problem: sub.Problem}
+		}
+		problemMap[key].Submissions = append(problemMap[key].Submissions, sub)
+	}
+
+	total, maxTotal := 0, 0
+
+	for _, prob := range problemMap {
+		sort.Slice(prob.Submissions, func(i, j int) bool {
+			return prob.Submissions[i].CreationTimeSeconds < prob.Submissions[j].CreationTimeSeconds
+		})
+
+		score := 0
+		base := 500
+		if prob.Problem.Rating != nil {
+			base = *prob.Problem.Rating
+		}
+		maxTotal += base
+
+		for i, sub := range prob.Submissions {
+			if sub.Verdict == "OK" {
+				solveTime := sub.CreationTimeSeconds - contestStart
+				wrongs := i // count before AC
+
+				timePenalty := (solveTime / 60) * 2
+				wrongPenalty := int64(wrongs * 50)
+
+				points := int64(base) - timePenalty - wrongPenalty
+				if points > 0 {
+					score = int(points)
+				}
+				break
+			}
+		}
+		total += score
+	}
+
+	return total, maxTotal
+}
+
+type ProblemResult struct {
+	Problem       data.Problem
+	Submissions   []data.Submission
+	Solved        bool
+	SolveTime     int64
+	WrongAttempts int
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -64,11 +156,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case tea.KeySpace:
 			if m.state == Dashboard {
+				// m.ratingTable, cmd = m.ratingTable.Update(msg)
 				cursor := m.ratingTable.Cursor()
-				m.ratingTable, cmd = m.ratingTable.Update(msg)
 				if cursor >= 0 && cursor < len(m.ratingData) {
 					selectedContestId := m.ratingData[cursor].ContestID
-					m.contestSubmissions = data.GetContestSubmissions(selectedContestId, m.handle)
+					m.contestSubmissions, m.contestSubmissionList = data.GetContestSubmissions(selectedContestId, m.handle)
+					m.score, m.maxScore = m.calculateScore(selectedContestId)
 					m.state = ContestAnalysis
 				}
 			}
@@ -78,10 +171,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.info = msg.info
 		m.ratingTable = msg.ratingTable
 		m.ratingData = msg.ratingData
+
 		m.ratingPlot = msg.ratingPlot
 		m.submission = msg.submission
 		m.contests = msg.contests
 		m.state = Dashboard
+		m.contestList = msg.contestList
 		return m, nil
 	case spinner.TickMsg:
 		m.spinner, cmd = m.spinner.Update(msg)
