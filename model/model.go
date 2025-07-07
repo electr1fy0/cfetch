@@ -157,7 +157,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case tea.KeySpace:
 			if m.state == Dashboard {
-				// m.ratingTable, cmd = m.ratingTable.Update(msg)
 				cursor := m.ratingTable.Cursor()
 				if cursor >= 0 && cursor < len(m.ratingData) {
 					selectedContestId := m.ratingData[cursor].ContestID
