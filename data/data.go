@@ -181,9 +181,9 @@ func MakeSubmissionDistributionChart(result []Submission) string {
 				Label: rng.label,
 				Values: []barchart.BarValue{
 					{
-						fmt.Sprintf("%d (%.1f%%)", count, percentage),
-						float64(count),
-						lipgloss.NewStyle().Foreground(lipgloss.Color(rng.color)),
+						Name:  fmt.Sprintf("%d (%.1f%%)", count, percentage),
+						Value: float64(count),
+						Style: lipgloss.NewStyle().Foreground(lipgloss.Color(rng.color)),
 					},
 				},
 			})
@@ -281,10 +281,7 @@ func MakeRatingTable(result []RatingHistory) table.Model {
 
 	var rows []table.Row
 
-	limit := len(result)
-
-	for i := 0; i < limit; i++ {
-		ratingItem := result[i]
+	for _, ratingItem := range result {
 		var row table.Row = []string{
 			fmt.Sprintf("%d", ratingItem.ContestID),
 			ratingItem.ContestName,
