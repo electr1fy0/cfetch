@@ -2,18 +2,17 @@ package model
 
 import (
 	"fmt"
-	"os"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/electr1fy0/cfetch/cmd"
+
 	"github.com/electr1fy0/cfetch/data"
 )
 
-func InitialModel() model {
+func InitialModel(handle string) model {
 	ti := textinput.New()
 	ti.Placeholder = "eg. tourist"
 	ti.Focus()
@@ -24,7 +23,7 @@ func InitialModel() model {
 	s.Spinner = spinner.Dot
 
 	var page screen
-	if cmd.Handle != "" {
+	if handle != "" {
 		page = Loading
 	}
 	return model{
@@ -36,7 +35,7 @@ func InitialModel() model {
 		contestSubmissions:    table.New(),
 		submission:            table.New(),
 		err:                   nil,
-		handle:                cmd.Handle,
+		handle:                handle,
 		spinner:               s,
 		score:                 0,
 		ratingPlot:            "",
@@ -48,6 +47,9 @@ func InitialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
+	if m.handle != "" {
+		return tea.Batch(textinput.Blink, m.spinner.Tick, getUserData(m.handle))
+	}
 	return textinput.Blink
 }
 
@@ -193,12 +195,4 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.ratingTable, cmd = m.ratingTable.Update(msg)
 	m.textinput, cmd = m.textinput.Update(msg)
 	return m, cmd
-}
-
-func Execute() {
-	p := tea.NewProgram(InitialModel(), tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
-	}
 }

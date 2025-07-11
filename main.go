@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/electr1fy0/cfetch/cmd"
-	"github.com/electr1fy0/cfetch/model"
 )
 
 func main() {
@@ -14,9 +12,5 @@ func main() {
 		fmt.Println("Error with cobra: ", err)
 		os.Exit(1)
 	}
-	p := tea.NewProgram(model.InitialModel(), tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
-	}
+
 }
