@@ -2,12 +2,14 @@ package model
 
 import (
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/electr1fy0/cfetch/cmd"
 	"github.com/electr1fy0/cfetch/data"
 )
 
@@ -21,8 +23,12 @@ func InitialModel() model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 
+	var page screen
+	if cmd.Handle != "" {
+		page = Loading
+	}
 	return model{
-		state:                 Login,
+		state:                 page,
 		textinput:             ti,
 		info:                  table.New(),
 		contests:              table.New(),
@@ -30,7 +36,7 @@ func InitialModel() model {
 		contestSubmissions:    table.New(),
 		submission:            table.New(),
 		err:                   nil,
-		handle:                "",
+		handle:                cmd.Handle,
 		spinner:               s,
 		score:                 0,
 		ratingPlot:            "",
@@ -187,4 +193,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.ratingTable, cmd = m.ratingTable.Update(msg)
 	m.textinput, cmd = m.textinput.Update(msg)
 	return m, cmd
+}
+
+func Execute() {
+	p := tea.NewProgram(InitialModel(), tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
 }
