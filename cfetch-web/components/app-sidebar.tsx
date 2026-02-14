@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CodeIcon,
@@ -22,15 +22,37 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 
 const items = [
   { title: "Snippets", href: "/snippets", icon: CodeIcon },
   { title: "Landing", href: "/landing", icon: LayoutIcon },
-  { title: "Posts", href: "/posts", icon: SearchIcon },
+  { title: "Analytics", href: "/analytics", icon: SearchIcon },
   { title: "New Post", href: "/posts/new", icon: KeyboardIcon },
 ] as const;
 
-export function AppSidebar() {
+function AccountAvatar({ avatarUrl }: { avatarUrl: string | null }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!avatarUrl || failed) {
+    return (
+      <span className="inline-flex size-4 items-center justify-center rounded-full border border-stone-700 bg-stone-900 text-[9px] font-semibold text-stone-300">
+        A
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={avatarUrl}
+      alt=""
+      onError={() => setFailed(true)}
+      className="size-4 rounded-full border border-stone-700 object-cover"
+    />
+  );
+}
+
+export function AppSidebar({ avatarUrl }: { avatarUrl: string | null }) {
   const pathname = usePathname();
 
   return (
@@ -41,7 +63,9 @@ export function AppSidebar() {
             CF
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none text-stone-100">cfetch</p>
+            <p className="text-sm font-semibold leading-none text-stone-100">
+              cfetch
+            </p>
             <p className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-wide text-stone-500">
               navigation
             </p>
@@ -66,7 +90,11 @@ export function AppSidebar() {
                       render={<Link href={item.href} />}
                       className="font-[family-name:var(--font-geist-mono)] text-xs"
                     >
-                      <HugeiconsIcon icon={item.icon} size={16} strokeWidth={1.8} />
+                      <HugeiconsIcon
+                        icon={item.icon}
+                        size={16}
+                        strokeWidth={1.8}
+                      />
                       <span>{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -85,20 +113,12 @@ export function AppSidebar() {
               render={<Link href="/account" />}
               className="font-[family-name:var(--font-geist-mono)] text-xs"
             >
-              <Image
-                src="/next.svg"
-                alt="Account avatar"
-                width={16}
-                height={16}
-                className="rounded-sm border border-stone-700 bg-stone-950 p-0.5"
-              />
+              <AccountAvatar avatarUrl={avatarUrl} />
               <span>Accounts</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <p className="px-2 pt-1 font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-wide text-stone-500">
-          cmd+b to toggle
-        </p>
+        <div className="px-2 pt-1"></div>
       </SidebarFooter>
     </Sidebar>
   );

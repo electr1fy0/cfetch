@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { defaultShikiTheme, getShiki } from "@/lib/shiki";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
@@ -59,13 +58,6 @@ export default async function Snippets() {
 
             <div className="flex items-center gap-3">
               <CreateSnippetDialog />
-              <Image
-                src={session.user.image ?? "/next.svg"}
-                alt="User Avatar"
-                width={30}
-                height={30}
-                className="rounded-md border border-stone-700"
-              />
             </div>
           </div>
         </header>
