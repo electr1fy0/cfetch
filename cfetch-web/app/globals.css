@@ -27,6 +27,7 @@
     --color-input: var(--input);
     --color-border: var(--border);
     --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
     --color-muted-foreground: var(--muted-foreground);
@@ -39,6 +40,14 @@
     --color-popover: var(--popover);
     --color-card-foreground: var(--card-foreground);
     --color-card: var(--card);
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-invert: var(--invert);
+    --color-invert-foreground: var(--invert-foreground);
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
@@ -65,6 +74,15 @@
     --accent: oklch(0.371 0 0);
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.704 0.191 22.216);
+    --destructive-foreground: oklch(0.83 0.1 22.2);
+    --info: oklch(0.74 0.14 262);
+    --info-foreground: oklch(0.93 0.02 260);
+    --success: oklch(0.76 0.13 153);
+    --success-foreground: oklch(0.92 0.02 153);
+    --warning: oklch(0.82 0.12 85);
+    --warning-foreground: oklch(0.28 0.04 85);
+    --invert: oklch(0.24 0.01 270);
+    --invert-foreground: oklch(0.96 0 0);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.556 0 0);
@@ -90,4 +108,40 @@
     body {
         @apply bg-background text-foreground font-sans antialiased;
     }
+}
+
+@theme inline {
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-invert: var(--invert);
+    --color-invert-foreground: var(--invert-foreground);
+}
+
+:root {
+    --destructive-foreground: var(--color-red-800);
+    --info: var(--color-violet-500);
+    --info-foreground: var(--color-violet-900);
+    --success: var(--color-emerald-500);
+    --success-foreground: var(--color-emerald-900);
+    --warning: var(--color-yellow-500);
+    --warning-foreground: var(--color-yellow-900);
+    --invert: var(--color-zinc-900);
+    --invert-foreground: var(--color-zinc-50);
+}
+
+.dark {
+    --destructive-foreground: var(--color-red-600);
+    --info: var(--color-violet-500);
+    --info-foreground: var(--color-violet-600);
+    --success: var(--color-emerald-500);
+    --success-foreground: var(--color-emerald-600);
+    --warning: var(--color-yellow-500);
+    --warning-foreground: var(--color-yellow-600);
+    --invert: var(--color-zinc-700);
+    --invert-foreground: var(--color-zinc-50);
 }
