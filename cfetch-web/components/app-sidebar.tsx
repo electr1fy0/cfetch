@@ -26,6 +26,7 @@ import { Kbd, KbdGroup } from "@/components/ui/kbd";
 
 const items = [
   { title: "Snippets", href: "/snippets", icon: CodeIcon },
+  { title: "Duels", href: "/duels", icon: KeyboardIcon },
   { title: "Landing", href: "/landing", icon: LayoutIcon },
   { title: "Analytics", href: "/analytics", icon: SearchIcon },
   { title: "New Post", href: "/posts/new", icon: KeyboardIcon },
