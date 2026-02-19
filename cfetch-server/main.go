@@ -17,40 +17,81 @@ import (
 )
 
 type RoomManager struct {
-	Rooms []*Room
+	mu    sync.RWMutex
+	Rooms map[uuid.UUID]*Room
 }
 
-var roomManager RoomManager
+var roomManager = RoomManager{
+	Rooms: make(map[uuid.UUID]*Room),
+}
 
 type Room struct {
 	ID      uuid.UUID
 	Clients map[string]*Client
-	mu      sync.Mutex
+	mu      sync.RWMutex
 }
 
 type Client struct {
-	Username  string
-	Conn      *websocket.Conn
-	Submitted bool
+	Username    string
+	Conn        *websocket.Conn
+	Submitted   bool
+	LastStatus  int
+	LastVerdict string
 }
 
-type Handler struct {
+type Handler struct{}
+
+// addRoom publishes a room into the global room index.
+// Callers should not mutate room IDs after insertion.
+func (rm *RoomManager) addRoom(room *Room) {
+	rm.mu.Lock()
+	rm.Rooms[room.ID] = room
+	rm.mu.Unlock()
 }
 
-// creates a new fresh room and returns a token
-func (h *Handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
-	client := Client{
-		Username: "u1",
+// getRoom returns the room pointer from the shared index.
+// The room itself has its own mutex for per-room mutations.
+func (rm *RoomManager) getRoom(id uuid.UUID) (*Room, bool) {
+	rm.mu.RLock()
+	room, ok := rm.Rooms[id]
+	rm.mu.RUnlock()
+	return room, ok
+}
+
+// addClient is the only place that mutates room membership.
+func (r *Room) addClient(c *Client) {
+	r.mu.Lock()
+	r.Clients[c.Username] = c
+	r.mu.Unlock()
+}
+
+func (r *Room) removeClient(username string) {
+	r.mu.Lock()
+	delete(r.Clients, username)
+	r.mu.Unlock()
+}
+
+// markSubmitted records the latest finalized verdict for a user in this room.
+func (r *Room) markSubmitted(username string, statusID int, verdict string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	client, ok := r.Clients[username]
+	if !ok {
+		return false
 	}
+	client.Submitted = true
+	client.LastStatus = statusID
+	client.LastVerdict = verdict
+	return true
+}
 
+// CreateRoom creates an empty duel room. Users are added only via JoinRoom.
+func (h *Handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	room := Room{
 		ID:      uuid.New(),
-		Clients: map[string]*Client{"u1": &client},
+		Clients: map[string]*Client{},
 	}
-
-	roomManager.Rooms = append(roomManager.Rooms, &room)
-	fmt.Println(roomManager)
-	fmt.Println(room.ID)
+	roomManager.addRoom(&room)
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "%s", room.ID)
@@ -72,17 +113,6 @@ type Status struct {
 	Description string `json:"description"`
 }
 
-// {
-//   "source_code": "int main(){return 0;}",
-//   "language_id": 54,
-//   "stdin": "input here",
-//   "expected_output": "expected output",
-//   "cpu_time_limit": 2,
-//   "memory_limit": 128000,
-//   "wall_time_limit": 5,
-//   "redirect_stderr_to_stdout": true
-// }
-
 type SubmissionRequest struct {
 	SourceCode             string `json:"source_code"`
 	LanguageID             int    `json:"language_id"`
@@ -94,85 +124,124 @@ type SubmissionRequest struct {
 	RedirectStderrToStdout bool   `json:"redirect_stderr_to_stdout"`
 }
 
-// starts the room and submission loop
+type SubmissionResult struct {
+	StatusID   int    `json:"status_id"`
+	StatusDesc string `json:"status_desc"`
+	Done       bool   `json:"done"`
+}
+
+type Token struct {
+	Token string `json:"token"`
+}
+
+// submitAndWait sends one submission to Judge0 and blocks until a final verdict.
+// Judge0 statuses 1 and 2 are non-final (queued/processing), everything else is terminal.
+func submitAndWait(client *http.Client, judgeURL string, payload SubmissionRequest) (SubmissionResult, error) {
+	rawBytes, err := json.Marshal(payload)
+	if err != nil {
+		return SubmissionResult{}, err
+	}
+
+	req, err := http.NewRequest("POST", judgeURL, bytes.NewReader(rawBytes))
+	if err != nil {
+		return SubmissionResult{}, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return SubmissionResult{}, err
+	}
+
+	var token Token
+	err = json.NewDecoder(resp.Body).Decode(&token)
+	resp.Body.Close()
+	if err != nil {
+		return SubmissionResult{}, err
+	}
+
+	for {
+		resp, err = client.Get(judgeURL + "/" + token.Token)
+		if err != nil {
+			return SubmissionResult{}, err
+		}
+
+		var judgeResp SubmissionResponse
+		err = json.NewDecoder(resp.Body).Decode(&judgeResp)
+		resp.Body.Close()
+		if err != nil {
+			return SubmissionResult{}, err
+		}
+
+		if judgeResp.Status.ID != 1 && judgeResp.Status.ID != 2 {
+			return SubmissionResult{
+				StatusID:   judgeResp.Status.ID,
+				StatusDesc: judgeResp.Status.Description,
+				Done:       true,
+			}, nil
+		}
+		time.Sleep(time.Second)
+	}
+}
+
+// JoinRoom upgrades to websocket, registers the user in the room,
+// and processes each incoming submission request sequentially.
 func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
-	username := r.URL.Query().Get("username")
-	roomID, _ := uuid.Parse(r.URL.Query().Get("room-id"))
+	username := chi.URLParam(r, "username")
+	roomIDParam := chi.URLParam(r, "roomID")
+	if username == "" {
+		http.Error(w, "missing username path param", http.StatusBadRequest)
+		return
+	}
+
+	roomID, err := uuid.Parse(roomIDParam)
+	if err != nil {
+		http.Error(w, "invalid roomID path param", http.StatusBadRequest)
+		return
+	}
 
 	c, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	for _, room := range roomManager.Rooms {
-		if room.ID == roomID {
-			room.Clients[username] = &Client{
-				Conn:     c,
-				Username: username,
-			}
-		}
-	}
-
 	defer c.Close(websocket.StatusNormalClosure, "")
 
-	var p SubmissionRequest
-	client := &http.Client{}
-	var judgeURL = "http://localhost:2358/submissions"
-	for {
-		err = wsjson.Read(r.Context(), c, &p)
-		if err != nil {
-			return
-		}
-		rawBytes, err := json.Marshal(p)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		req, err := http.NewRequest("POST", judgeURL, bytes.NewReader(rawBytes))
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		req.Header.Add("Content-Type", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		var token Token
-
-		// submitted token, now we wait
-		json.NewDecoder(resp.Body).Decode(&token)
-
-		// rep poll the judge thing
-		go func(Token string) {
-			for {
-				resp, err := http.Get(judgeURL + "/" + Token)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-
-				var judgeResp SubmissionResponse
-				err = json.NewDecoder(resp.Body).Decode(&judgeResp)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				fmt.Println(judgeResp)
-				if judgeResp.Status.ID != 1 && judgeResp.Status.ID != 2 {
-					break
-				}
-				time.Sleep(time.Second)
-			}
-		}(token.Token)
+	roomCurr, ok := roomManager.getRoom(roomID)
+	if !ok {
+		_ = c.Close(websocket.StatusPolicyViolation, "room not found")
+		return
 	}
-}
 
-type Token struct {
-	Token string `json:"token"`
+	roomClient := &Client{Conn: c, Username: username}
+	roomCurr.addClient(roomClient)
+	// Keep room membership consistent with websocket connection lifetime.
+	defer roomCurr.removeClient(username)
+
+	httpClient := &http.Client{}
+	judgeURL := "http://localhost:2358/submissions"
+
+	for {
+		var req SubmissionRequest
+		err = wsjson.Read(r.Context(), c, &req)
+		if err != nil {
+			return
+		}
+
+		result, err := submitAndWait(httpClient, judgeURL, req)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		if !roomCurr.markSubmitted(username, result.StatusID, result.StatusDesc) {
+			return
+		}
+
+		if err := wsjson.Write(r.Context(), c, result); err != nil {
+			return
+		}
+	}
 }
 
 func main() {
@@ -183,7 +252,7 @@ func main() {
 
 	h := Handler{}
 	r.Post("/room", h.CreateRoom)
-	r.Get("/ws/room", h.JoinRoom)
+	r.Get("/ws/room/{roomID}/{username}", h.JoinRoom)
 
 	server := http.Server{
 		Addr:    ":8080",
