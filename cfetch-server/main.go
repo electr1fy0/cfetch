@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"
@@ -29,8 +29,9 @@ type Room struct {
 }
 
 type Client struct {
-	Username string
-	Conn     *websocket.Conn
+	Username  string
+	Conn      *websocket.Conn
+	Submitted bool
 }
 
 type Handler struct {
@@ -93,6 +94,7 @@ type SubmissionRequest struct {
 	RedirectStderrToStdout bool   `json:"redirect_stderr_to_stdout"`
 }
 
+// starts the room and submission loop
 func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("username")
 	roomID, _ := uuid.Parse(r.URL.Query().Get("room-id"))
@@ -140,7 +142,11 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var token Token
+
+		// submitted token, now we wait
 		json.NewDecoder(resp.Body).Decode(&token)
+
+		// rep poll the judge thing
 		go func(Token string) {
 			for {
 				resp, err := http.Get(judgeURL + "/" + Token)
@@ -149,12 +155,17 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				rawResp, err := io.ReadAll(resp.Body)
+				var judgeResp SubmissionResponse
+				err = json.NewDecoder(resp.Body).Decode(&judgeResp)
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
-				fmt.Println(string(rawResp))
+				fmt.Println(judgeResp)
+				if judgeResp.Status.ID != 1 && judgeResp.Status.ID != 2 {
+					break
+				}
+				time.Sleep(time.Second)
 			}
 		}(token.Token)
 	}
@@ -180,5 +191,4 @@ func main() {
 	}
 
 	log.Fatal(server.ListenAndServe())
-
 }
