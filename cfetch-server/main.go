@@ -29,7 +29,24 @@ var roomManager = RoomManager{
 type Room struct {
 	ID      uuid.UUID
 	Clients map[string]*Client
-	mu      sync.RWMutex
+
+	events chan RoomEvent
+	mu     sync.RWMutex
+}
+
+type RoomEventType int
+
+const (
+	EventJoin RoomEventType = iota
+	EventLeave
+	EventSubmission
+)
+
+type RoomEvent struct {
+	Type     RoomEventType
+	Username string
+	StatusID int
+	Verdict  string
 }
 
 type Client struct {
@@ -86,14 +103,56 @@ func (r *Room) markSubmitted(username string, statusID int, verdict string) bool
 	return true
 }
 
+// All room activities are handled here
+// Nowhere else is room modified
+// TODO: Remove the mutex stuff
+func (r *Room) Run() {
+	for event := range r.events {
+		switch event.Type {
+		case EventJoin:
+		//
+		case EventLeave:
+		//
+		case EventSubmission:
+			msg := BroadcastMessage{
+				Username: event.Username,
+				Message:  fmt.Sprintf("%s has submitted at idk, but he has", event.Username),
+			}
+			r.Broadcast(msg)
+		}
+	}
+}
+
+type BroadcastMessage struct {
+	Username string `json:"src_user"`
+
+	// TODO: this should be a type of consts.
+	MessageType string // tbd
+
+	Message string `json:"message"`
+}
+
+// You give all signals through this and this only
+// Probably logs should go through this but tbd is
+// to filter out the user whose log it is and don't show it to him
+// maybe fine to do it client side for now.
+func (r *Room) Broadcast(msg BroadcastMessage) {
+	for _, c := range r.Clients {
+		wsjson.Write(context.Background(), c.Conn, msg)
+	}
+}
+
 // CreateRoom creates an empty duel room. Users are added only via JoinRoom.
 func (h *Handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	room := Room{
 		ID:      uuid.New(),
 		Clients: map[string]*Client{},
+		events:  make(chan RoomEvent),
 	}
+
 	roomManager.addRoom(&room)
 
+	go room.Run()
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "%s", room.ID)
 }
@@ -229,16 +288,27 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		fmt.Println("gonna submit and wait...")
 		result, err := submitAndWait(httpClient, judgeURL, req)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
+		fmt.Println("result:", result)
 		if !roomCurr.markSubmitted(username, result.StatusID, result.StatusDesc) {
+			fmt.Println("did not mark as sub")
+
 			return
 		}
 
+		roomCurr.events <- RoomEvent{
+			Username: username,
+			Type:     EventSubmission,
+			StatusID: result.StatusID,
+			Verdict:  result.StatusDesc,
+		}
+		fmt.Println("sending event...")
 		if err := wsjson.Write(r.Context(), c, result); err != nil {
 			return
 		}
@@ -256,25 +326,6 @@ func (r *RoomManager) deleteRoom(id uuid.UUID) {
 	delete(roomManager.Rooms, id)
 }
 
-func (r *RoomManager) assessRooms() {
-	for {
-		for id, room := range roomManager.Rooms {
-			var roomDone = true
-			for _, c := range room.Clients {
-				if !c.Submitted {
-					roomDone = false
-				}
-			}
-			if roomDone && len(room.Clients) != 0 {
-				fmt.Println("deleting room")
-				r.deleteRoom(id)
-			}
-		}
-		time.Sleep(1 * time.Second)
-	}
-
-}
-
 func main() {
 	r := chi.NewRouter()
 
@@ -289,8 +340,6 @@ func main() {
 		Addr:    ":8080",
 		Handler: r,
 	}
-
-	go roomManager.assessRooms()
 
 	log.Fatal(server.ListenAndServe())
 }
