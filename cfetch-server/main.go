@@ -238,13 +238,8 @@ func (r *Room) submitAndWait(username string, payload SubmissionRequest) {
 		Type:     EventSubmission,
 		Verdict:  "Pending",
 	}
-	go r.getVerdict(token.Token)
-}
-
-func (r *Room) getVerdict(token string) {
-	client := &http.Client{}
 	for {
-		resp, err := client.Get(judgeURL + "/" + token)
+		resp, err := client.Get(judgeURL + "/" + token.Token)
 		if err != nil {
 			return
 		}
@@ -256,13 +251,13 @@ func (r *Room) getVerdict(token string) {
 			return
 		}
 
-		if judgeResp.Status.ID != 1 && judgeResp.Status.ID != 2 {
-			r.events <- RoomEvent{
-				Username: "",
-				Type:     EventSubmission,
-				StatusID: judgeResp.Status.ID,
-				Verdict:  judgeResp.Status.Description,
-			}
+		r.events <- RoomEvent{
+			Username: "",
+			Type:     EventSubmission,
+			StatusID: judgeResp.Status.ID,
+			Verdict:  judgeResp.Status.Description,
+		}
+		if judgeResp.Status.ID != 2 && judgeResp.Status.ID != 1 {
 			break
 		}
 		time.Sleep(time.Second)
@@ -300,6 +295,7 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	roomClient := &Client{Conn: c, Username: username}
 	roomCurr.addClient(roomClient)
+
 	// Keep room membership consistent with websocket connection lifetime.
 	defer roomCurr.removeClient(username)
 
