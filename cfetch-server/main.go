@@ -17,6 +17,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var judgeURL = "http://localhost:2358/submissions"
+
 type RoomManager struct {
 	mu    sync.RWMutex
 	Rooms map[uuid.UUID]*Room
@@ -84,9 +86,7 @@ func (r *Room) addClient(c *Client) {
 }
 
 func (r *Room) removeClient(username string) {
-	r.mu.Lock()
 	delete(r.Clients, username)
-	r.mu.Unlock()
 }
 
 // markSubmitted records the latest finalized verdict for a user in this room.
@@ -110,13 +110,22 @@ func (r *Room) Run() {
 	for event := range r.events {
 		switch event.Type {
 		case EventJoin:
-		//
-		case EventLeave:
-		//
-		case EventSubmission:
 			msg := BroadcastMessage{
-				Username: event.Username,
-				Message:  fmt.Sprintf("%s has submitted at idk, but he has", event.Username),
+				Username:    event.Username,
+				MessageType: "Join",
+				Message:     fmt.Sprintf("%s has joined", event.Username),
+			}
+			r.Broadcast(msg)
+		case EventLeave:
+			r.removeClient(event.Username)
+
+		case EventSubmission:
+			fmt.Println(event.Verdict)
+			msg := BroadcastMessage{
+				Username:    event.Username,
+				MessageType: "Submission",
+
+				Message: fmt.Sprintf("%s has submitted and has got %s", event.Username, event.Verdict),
 			}
 			r.Broadcast(msg)
 		}
@@ -196,49 +205,65 @@ type Token struct {
 
 // submitAndWait sends one submission to Judge0 and blocks until a final verdict.
 // Judge0 statuses 1 and 2 are non-final (queued/processing), everything else is terminal.
-func submitAndWait(client *http.Client, judgeURL string, payload SubmissionRequest) (SubmissionResult, error) {
+func (r *Room) submitAndWait(username string, payload SubmissionRequest) {
 	rawBytes, err := json.Marshal(payload)
 	if err != nil {
-		return SubmissionResult{}, err
+		return
 	}
 
 	req, err := http.NewRequest("POST", judgeURL, bytes.NewReader(rawBytes))
 	if err != nil {
-		return SubmissionResult{}, err
+		return
 	}
 	req.Header.Add("Content-Type", "application/json")
 
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return SubmissionResult{}, err
+		return
 	}
 
 	var token Token
 	err = json.NewDecoder(resp.Body).Decode(&token)
-	resp.Body.Close()
 	if err != nil {
-		return SubmissionResult{}, err
+		return
 	}
 
+	resp.Body.Close()
+
+	// at this point we've submitted the code
+	// and we get the token, should broadcast to everyone
+	r.events <- RoomEvent{
+		Username: username,
+		Type:     EventSubmission,
+		Verdict:  "Pending",
+	}
+	go r.getVerdict(token.Token)
+}
+
+func (r *Room) getVerdict(token string) {
+	client := &http.Client{}
 	for {
-		resp, err = client.Get(judgeURL + "/" + token.Token)
+		resp, err := client.Get(judgeURL + "/" + token)
 		if err != nil {
-			return SubmissionResult{}, err
+			return
 		}
 
 		var judgeResp SubmissionResponse
 		err = json.NewDecoder(resp.Body).Decode(&judgeResp)
 		resp.Body.Close()
 		if err != nil {
-			return SubmissionResult{}, err
+			return
 		}
 
 		if judgeResp.Status.ID != 1 && judgeResp.Status.ID != 2 {
-			return SubmissionResult{
-				StatusID:   judgeResp.Status.ID,
-				StatusDesc: judgeResp.Status.Description,
-				Done:       true,
-			}, nil
+			r.events <- RoomEvent{
+				Username: "",
+				Type:     EventSubmission,
+				StatusID: judgeResp.Status.ID,
+				Verdict:  judgeResp.Status.Description,
+			}
+			break
 		}
 		time.Sleep(time.Second)
 	}
@@ -278,9 +303,6 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	// Keep room membership consistent with websocket connection lifetime.
 	defer roomCurr.removeClient(username)
 
-	httpClient := &http.Client{}
-	judgeURL := "http://localhost:2358/submissions"
-
 	for {
 		var req SubmissionRequest
 		err = wsjson.Read(r.Context(), c, &req)
@@ -289,29 +311,8 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 		}
 
 		fmt.Println("gonna submit and wait...")
-		result, err := submitAndWait(httpClient, judgeURL, req)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		go roomCurr.submitAndWait(username, req)
 
-		fmt.Println("result:", result)
-		if !roomCurr.markSubmitted(username, result.StatusID, result.StatusDesc) {
-			fmt.Println("did not mark as sub")
-
-			return
-		}
-
-		roomCurr.events <- RoomEvent{
-			Username: username,
-			Type:     EventSubmission,
-			StatusID: result.StatusID,
-			Verdict:  result.StatusDesc,
-		}
-		fmt.Println("sending event...")
-		if err := wsjson.Write(r.Context(), c, result); err != nil {
-			return
-		}
 	}
 }
 
