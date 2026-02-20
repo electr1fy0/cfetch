@@ -25,7 +25,7 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 
 const items = [
-  { title: "Snippets", href: "/snippets", icon: CodeIcon },
+  { title: "Templates", href: "/templates", icon: CodeIcon },
   { title: "Duels", href: "/duels", icon: KeyboardIcon },
   { title: "Landing", href: "/landing", icon: LayoutIcon },
   { title: "Analytics", href: "/analytics", icon: SearchIcon },
@@ -82,7 +82,7 @@ export function AppSidebar({ avatarUrl }: { avatarUrl: string | null }) {
               {items.map((item) => {
                 const isActive =
                   pathname === item.href ||
-                  (item.href !== "/snippets" && pathname.startsWith(item.href));
+                  (item.href !== "/templates" && pathname.startsWith(item.href));
 
                 return (
                   <SidebarMenuItem key={item.href}>

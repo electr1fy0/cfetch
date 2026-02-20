@@ -1,10 +1,10 @@
 "use server";
 
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+// import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
-export async function createSnippet(formData: FormData) {
+export async function createTemplate(formData: FormData) {
   const session = await auth();
   if (!session?.user) return;
 
@@ -17,15 +17,15 @@ export async function createSnippet(formData: FormData) {
     throw new Error("Message cannot be empty");
   }
 
-  const snippet = await prisma.snippet.create({
-    data: {
-      content,
-      authorId: session.user.id,
-      language: language || null,
-      difficulty: difficulty || null,
-      complexity: complexity || null,
-    },
-  });
+  // const template = await prisma.template.create({
+  //   data: {
+  //     content,
+  //     authorId: session.user.id,
+  //     language: language || null,
+  //     difficulty: difficulty || null,
+  //     complexity: complexity || null,
+  //   },
+  // });
 
-  redirect(`/snippets/${snippet.id}`);
+  // redirect(`/templates/${template.id}`);
 }

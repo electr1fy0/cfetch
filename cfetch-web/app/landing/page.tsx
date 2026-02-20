@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { signIn } from "@/auth";
+import { cookies } from "next/headers";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GetStartedFlow } from "@/components/get-started-flow";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Clock01Icon,
@@ -18,7 +20,7 @@ const marqueeFeed = [
   "delta prediction model online",
   "anti-slump filter active",
   "sandbox latency within target",
-  "snippet vault version graph",
+  "template vault version graph",
 ];
 
 const analyticsRows = [
@@ -56,35 +58,11 @@ const discoverySignals = [
   "Heuristics surface problems near your failure boundary",
 ];
 
-const snippetSignals = [
+const templateSignals = [
   "Quick-inject hotkeys from in-editor modal",
   "Fork optimized templates: HLD, FFT, MaxFlow",
   "Version-controlled notebook with rollback",
 ];
-
-function SignInAction() {
-  return (
-    <form
-      action={async () => {
-        "use server";
-        await signIn("google");
-      }}
-      className="flex w-full max-w-xl flex-col gap-2 sm:flex-row"
-    >
-      <input
-        aria-label="Codeforces handle"
-        placeholder="Enter Codeforces username"
-        className="h-11 flex-1 rounded-md border border-dashed border-zinc-600 bg-zinc-950 px-4 text-sm text-zinc-200 placeholder:text-zinc-500"
-      />
-      <Button
-        type="submit"
-        className="h-11 rounded-md border border-zinc-500 bg-zinc-100 px-4 text-xs uppercase tracking-[0.2em] text-zinc-900 transition hover:bg-white"
-      >
-        Get Started
-      </Button>
-    </form>
-  );
-}
 
 function SectionBlock({
   index,
@@ -146,6 +124,27 @@ function SectionBlock({
 }
 
 export default async function Landing() {
+  async function startWithGoogle(formData: FormData) {
+    "use server";
+
+    const rawHandle = formData.get("handle");
+    const handle = typeof rawHandle === "string" ? rawHandle.trim() : "";
+    const handlePattern = /^[a-zA-Z0-9_\-.]{3,24}$/;
+
+    if (!handlePattern.test(handle)) return;
+
+    const cookieStore = await cookies();
+    cookieStore.set("cfetch_handle_lock", handle, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 10,
+    });
+
+    await signIn("google", { redirectTo: "/auth" });
+  }
+
   return (
     <div className="min-h-screen bg-[#070707] px-4 py-6 text-zinc-100 sm:px-6 sm:py-8">
       <main className="mx-auto w-full max-w-7xl space-y-6 font-[family-name:var(--font-geist-mono)] sm:space-y-8">
@@ -181,7 +180,7 @@ export default async function Landing() {
                 logic-level performance analytics into one state-synced
                 workspace built for ICPC athletes and serious CF grinders.
               </p>
-              <SignInAction />
+              <GetStartedFlow startWithGoogle={startWithGoogle} />
             </div>
 
             <Card className="rounded-2xl border-dashed border-zinc-700 bg-zinc-900/55 p-0">
@@ -271,7 +270,6 @@ export default async function Landing() {
                   Best Feature
                 </Badge>
               </div>
-              <SignInAction />
             </div>
             <div className="space-y-4 border-t border-dashed border-zinc-700 pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
               {duelSignals.map((point) => (
@@ -316,10 +314,10 @@ export default async function Landing() {
         />
 
         <SectionBlock
-          index="04 / Snippet System"
+          index="04 / Template System"
           title="Algorithm vault as physical memory"
-          body="Treat your template library as persistent memory: inject hot snippets during practice or duels, fork community-optimized implementations, and keep every algorithm versioned with clean rollback points."
-          points={snippetSignals}
+          body="Treat your template library as persistent memory: inject hot templates during practice or duels, fork community-optimized implementations, and keep every algorithm versioned with clean rollback points."
+          points={templateSignals}
           variant="split"
         />
 
@@ -344,7 +342,7 @@ export default async function Landing() {
               </Badge>
               <Badge className="rounded-sm border border-dashed border-zinc-700 bg-zinc-900/70 text-zinc-400">
                 <HugeiconsIcon icon={KeyboardIcon} size={14} className="mr-1.5" />
-                Versioned Snippets
+                Versioned Templates
               </Badge>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">

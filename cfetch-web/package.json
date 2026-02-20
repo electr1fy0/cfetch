@@ -6,15 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "postinstall": "prisma generate",
     "lint": "eslint"
   },
   "dependencies": {
+    "@auth/pg-adapter": "^1.11.1",
     "@auth/prisma-adapter": "^2.11.1",
     "@base-ui/react": "^1.2.0",
     "@hugeicons/core-free-icons": "^3.1.1",
     "@hugeicons/react": "^1.1.5",
     "@monaco-editor/react": "^4.7.0",
+    "@neondatabase/serverless": "^1.0.2",
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "@types/pg": "^8.16.0",

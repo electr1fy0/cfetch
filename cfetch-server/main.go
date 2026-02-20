@@ -4,17 +4,25 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
+
+	db "cfetch/internal/db"
 
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 var judgeURL = "http://localhost:2358/submissions"
@@ -48,6 +56,7 @@ type RoomEvent struct {
 	Type     RoomEventType
 	Username string
 	StatusID int
+	Client   *Client
 	Verdict  string
 }
 
@@ -59,30 +68,27 @@ type Client struct {
 	LastVerdict string
 }
 
-type Handler struct{}
+type Handler struct {
+	queries *db.Queries
+}
 
-// addRoom publishes a room into the global room index.
-// Callers should not mutate room IDs after insertion.
 func (rm *RoomManager) addRoom(room *Room) {
 	rm.mu.Lock()
+	defer rm.mu.Unlock()
 	rm.Rooms[room.ID] = room
-	rm.mu.Unlock()
 }
 
 // getRoom returns the room pointer from the shared index.
-// The room itself has its own mutex for per-room mutations.
 func (rm *RoomManager) getRoom(id uuid.UUID) (*Room, bool) {
-	rm.mu.RLock()
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
 	room, ok := rm.Rooms[id]
-	rm.mu.RUnlock()
 	return room, ok
 }
 
 // addClient is the only place that mutates room membership.
 func (r *Room) addClient(c *Client) {
-	r.mu.Lock()
 	r.Clients[c.Username] = c
-	r.mu.Unlock()
 }
 
 func (r *Room) removeClient(username string) {
@@ -91,8 +97,6 @@ func (r *Room) removeClient(username string) {
 
 // markSubmitted records the latest finalized verdict for a user in this room.
 func (r *Room) markSubmitted(username string, statusID int, verdict string) bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
 	client, ok := r.Clients[username]
 	if !ok {
 		return false
@@ -105,11 +109,11 @@ func (r *Room) markSubmitted(username string, statusID int, verdict string) bool
 
 // All room activities are handled here
 // Nowhere else is room modified
-// TODO: Remove the mutex stuff
 func (r *Room) Run() {
 	for event := range r.events {
 		switch event.Type {
 		case EventJoin:
+			r.addClient(event.Client)
 			msg := BroadcastMessage{
 				Username:    event.Username,
 				MessageType: "Join",
@@ -156,7 +160,7 @@ func (h *Handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	room := Room{
 		ID:      uuid.New(),
 		Clients: map[string]*Client{},
-		events:  make(chan RoomEvent),
+		events:  make(chan RoomEvent, 64),
 	}
 
 	roomManager.addRoom(&room)
@@ -252,19 +256,22 @@ func (r *Room) submitAndWait(username string, payload SubmissionRequest) {
 		}
 
 		r.events <- RoomEvent{
-			Username: "",
+			Username: username,
 			Type:     EventSubmission,
 			StatusID: judgeResp.Status.ID,
 			Verdict:  judgeResp.Status.Description,
 		}
+
 		if judgeResp.Status.ID != 2 && judgeResp.Status.ID != 1 {
 			break
 		}
-		time.Sleep(time.Second)
+
+		// TODO: rethink the duration
+		time.Sleep(time.Second * 2)
 	}
 }
 
-// JoinRoom upgrades to websocket, registers the user in the room,
+// JoinRoom upgrades to websocket, sends an event to add user to the room
 // and processes each incoming submission request sequentially.
 func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	username := chi.URLParam(r, "username")
@@ -294,10 +301,20 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	roomClient := &Client{Conn: c, Username: username}
-	roomCurr.addClient(roomClient)
+	roomCurr.events <- RoomEvent{
+		Type:     EventJoin,
+		Username: username,
+		Client:   roomClient,
+	}
 
 	// Keep room membership consistent with websocket connection lifetime.
-	defer roomCurr.removeClient(username)
+	defer func() {
+		roomCurr.events <- RoomEvent{
+			Type:     EventLeave,
+			Username: username,
+			Client:   roomClient,
+		}
+	}()
 
 	for {
 		var req SubmissionRequest
@@ -306,7 +323,6 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Println("gonna submit and wait...")
 		go roomCurr.submitAndWait(username, req)
 
 	}
@@ -323,14 +339,67 @@ func (r *RoomManager) deleteRoom(id uuid.UUID) {
 	delete(roomManager.Rooms, id)
 }
 
+func (h *Handler) GetSession(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("authjs.session-token")
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	session, err := h.queries.GetSessionWithUser(r.Context(), cookie.Value)
+	if errors.Is(err, pgx.ErrNoRows) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if err != nil {
+		http.Error(w, "failed to fetch session", http.StatusInternalServerError)
+		return
+	}
+
+	email := ""
+	if session.Email.Valid {
+		email = session.Email.String
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"userId":       session.ID,
+		"email":        email,
+		"expires":      session.Expires.Time,
+		"sessionToken": cookie.Value,
+	}); err != nil {
+		http.Error(w, "failed to encode session", http.StatusInternalServerError)
+	}
+}
+
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL is required")
+	}
+
+	pool, err := pgxpool.New(context.Background(), dbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://*"},
+		AllowCredentials: true,
+	}))
 
-	h := Handler{}
+	h := Handler{queries: db.New(pool)}
 	r.Post("/room", h.CreateRoom)
+	r.Get("/session", h.GetSession)
 	r.Get("/ws/room/{roomID}/{username}", h.JoinRoom)
 
 	server := http.Server{
@@ -338,5 +407,6 @@ func main() {
 		Handler: r,
 	}
 
+	fmt.Println("Starting server on :8080...")
 	log.Fatal(server.ListenAndServe())
 }

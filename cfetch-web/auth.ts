@@ -1,8 +1,12 @@
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import PostgresAdapter from "@auth/pg-adapter";
+import { Pool } from "@neondatabase/serverless";
 import Google from "next-auth/providers/google";
-import prisma from "./lib/prisma";
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [Google],
-  adapter: PrismaAdapter(prisma),
+
+export const { handlers, auth, signIn, signOut } = NextAuth(() => {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  return {
+    adapter: PostgresAdapter(pool),
+    providers: [Google],
+  };
 });
