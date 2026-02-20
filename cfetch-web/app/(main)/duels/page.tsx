@@ -1,24 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Editor } from "@monaco-editor/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  ArrowDown01Icon,
+  ArrowUp01Icon,
   Clock01Icon,
-  CodeIcon,
   ViewIcon,
 } from "@hugeicons/core-free-icons";
 
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 type ProblemState = "live" | "won_you" | "won_opp" | "pending";
 
@@ -29,20 +24,70 @@ type DuelProblem = {
   state: ProblemState;
   description: string;
   examples: Array<{ input: string; output: string; note?: string }>;
+  formalDefinition?: string[];
+  inputSpec?: string[];
+  outputSpec?: string[];
+  guarantees?: string[];
+  sampleInput?: string;
+  sampleOutput?: string;
+  notes?: string[];
   testsPassed: { you: number; opp: number; total: number };
 };
 
 const problems: DuelProblem[] = [
   {
     id: "P1",
-    title: "Longest Substring Without Repeating Characters",
+    title: "Many Many Heads",
     difficulty: "Medium",
     state: "live",
-    description:
-      "Given a string s, return the length of the longest substring without repeating characters.",
+    description: `Multi-Heads Cup (MHC) assigns each participant a unique balanced bracket sequence using () and [].
+
+Participants cannot distinguish bracket directions, so each bracket may be remembered reversed, but bracket type remains the same. Given a memorized sequence S, determine whether it maps to exactly one original balanced bracket sequence.
+Output Yes iff exactly one original balanced sequence can produce S after direction flips; otherwise output No.`,
     examples: [
-      { input: 's = "abcabcbb"', output: "3", note: 'Longest is "abc".' },
-      { input: 's = "bbbbb"', output: "1" },
+      { input: "S = ))", output: "Yes", note: "Unique original: ()" },
+      { input: "S = ((()", output: "No", note: "Could be (()) or ()()" },
+      { input: "S = [()]", output: "Yes" },
+    ],
+    formalDefinition: [
+      "ε (empty string) is balanced.",
+      "If A is balanced, then (A) and [A] are balanced.",
+      "If A and B are balanced, then AB is balanced.",
+      'Examples balanced: "()", "[()]", "[()]()".',
+      'Examples not balanced: ")(", "[(])", "[)".',
+    ],
+    inputSpec: [
+      "First line: integer T, number of test cases.",
+      "For each test case: one string S of characters (, ), [, ].",
+    ],
+    outputSpec: [
+      "For each test case output one line:",
+      "Yes -> exactly one balanced original sequence maps to S.",
+      "No -> more than one balanced original sequence maps to S.",
+    ],
+    guarantees: [
+      "1 <= |S| <= 1e5 for each test case.",
+      "Sum of |S| over all test cases <= 1e6.",
+      "Each S is obtained from some balanced sequence by flipping directions.",
+    ],
+    sampleInput: `6
+))
+((()
+[()]
+()[()]()
+([()])
+([])([])`,
+    sampleOutput: `Yes
+No
+Yes
+No
+Yes
+No`,
+    notes: [
+      "S = )) maps uniquely to ().",
+      "S = ((() maps to both (()) and ()().",
+      "S = ()[()]() has multiple possible originals, so answer is No.",
+      "S = ([])([]) has three valid originals in the official note.",
     ],
     testsPassed: { you: 18, opp: 21, total: 25 },
   },
@@ -61,10 +106,26 @@ const problems: DuelProblem[] = [
     title: "Merge Intervals",
     difficulty: "Hard",
     state: "pending",
-    description: "Merge overlapping intervals and return the minimal set of non-overlapping intervals.",
-    examples: [{ input: "intervals = [[1,3],[2,6],[8,10],[15,18]]", output: "[[1,6],[8,10],[15,18]]" }],
+    description:
+      "Merge overlapping intervals and return the minimal set of non-overlapping intervals.",
+    examples: [
+      {
+        input: "intervals = [[1,3],[2,6],[8,10],[15,18]]",
+        output: "[[1,6],[8,10],[15,18]]",
+      },
+    ],
     testsPassed: { you: 0, opp: 0, total: 22 },
   },
+];
+
+const opponentLog = [
+  { at: "12:01:08", type: "compile", msg: "Build succeeded", tone: "ok" },
+  { at: "12:01:44", type: "submit", msg: "Submitted P1 attempt #4", tone: "neutral" },
+  { at: "12:02:10", type: "verdict", msg: "WA on case #05", tone: "warn" },
+  { at: "12:02:56", type: "submit", msg: "Submitted P1 attempt #5", tone: "neutral" },
+  { at: "12:03:23", type: "verdict", msg: "Passed 21/25", tone: "ok" },
+  { at: "12:04:02", type: "switch", msg: "Switched to P2", tone: "neutral" },
+  { at: "12:04:31", type: "compile", msg: "Compile error fixed", tone: "ok" },
 ];
 
 const starterCode = `class Solution {
@@ -84,300 +145,328 @@ public:
   }
 };`;
 
-function ProgressBar({
-  label,
-  passed,
-  total,
-  active,
-}: {
-  label: string;
-  passed: number;
-  total: number;
-  active?: boolean;
-}) {
-  const pct = Math.round((passed / total) * 100);
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-xs text-zinc-400">
-        <span>{label}</span>
-        <span className="font-mono text-zinc-300">
-          {passed}/{total}
-        </span>
-      </div>
-      <div className="h-2.5 overflow-hidden rounded-full bg-zinc-800">
-        <div
-          className={active ? "h-full rounded-full bg-orange-500" : "h-full rounded-full bg-zinc-500"}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function stateLabel(state: ProblemState) {
-  if (state === "won_you") return "Won";
-  if (state === "won_opp") return "Lost";
-  if (state === "live") return "Live";
-  return "Queued";
+function defineTheme(monaco: any) {
+  monaco.editor.defineTheme("cfetch-one-dark", {
+    base: "vs-dark",
+    inherit: true,
+    rules: [
+      { token: "keyword", foreground: "FF4FA3" },
+      { token: "string", foreground: "00D084" },
+      { token: "number", foreground: "41B9FF" },
+      { token: "comment", foreground: "7A7A7A", fontStyle: "italic" },
+      { token: "function", foreground: "C56CFF" },
+      { token: "type", foreground: "41B9FF" },
+    ],
+    colors: {
+      "editor.background": "#0a0a0a",
+      "editor.foreground": "#EAEAEA",
+      "editorLineNumber.foreground": "#616161",
+      "editorCursor.foreground": "#ff4f00",
+      "editor.selectionBackground": "#2A2A2A",
+    },
+  });
 }
 
 export default function DuelsPage() {
   const [activeProblemId, setActiveProblemId] = useState("P1");
   const [code, setCode] = useState(starterCode);
-  const [peekLeft, setPeekLeft] = useState(2);
-  const [peekTimer, setPeekTimer] = useState(0);
+  const [logIndex, setLogIndex] = useState(opponentLog.length - 1);
 
-  const activeProblem = problems.find((p) => p.id === activeProblemId) ?? problems[0];
+  const activeProblem =
+    problems.find((problem) => problem.id === activeProblemId) ?? problems[0];
 
   const summary = useMemo(() => {
-    const base = {
-      youTests: 0,
-      oppTests: 0,
-      totalTests: 0,
-      youWins: 0,
-      oppWins: 0,
-    };
-
+    const base = { youWins: 0, oppWins: 0, live: 0 };
     for (const problem of problems) {
-      base.youTests += problem.testsPassed.you;
-      base.oppTests += problem.testsPassed.opp;
-      base.totalTests += problem.testsPassed.total;
       if (problem.state === "won_you") base.youWins += 1;
       if (problem.state === "won_opp") base.oppWins += 1;
+      if (problem.state === "live") base.live += 1;
     }
-
     return base;
   }, []);
 
-  useEffect(() => {
-    if (peekTimer <= 0) return;
-    const id = setInterval(() => setPeekTimer((v) => (v <= 1 ? 0 : v - 1)), 1000);
-    return () => clearInterval(id);
-  }, [peekTimer]);
-
-  function handlePeek() {
-    if (peekLeft <= 0 || peekTimer > 0) return;
-    setPeekLeft((v) => v - 1);
-    setPeekTimer(5);
-  }
-
-  function defineTheme(monaco: any) {
-    monaco.editor.defineTheme("cfetch-one-dark", {
-      base: "vs-dark",
-      inherit: true,
-      rules: [
-        { token: "keyword", foreground: "C678DD" },
-        { token: "string", foreground: "98C379" },
-        { token: "number", foreground: "D19A66" },
-        { token: "comment", foreground: "5C6370", fontStyle: "italic" },
-        { token: "function", foreground: "61AFEF" },
-        { token: "type", foreground: "E5C07B" },
-      ],
-      colors: {
-        "editor.background": "#121315",
-        "editor.foreground": "#ABB2BF",
-        "editorLineNumber.foreground": "#4B5263",
-        "editorCursor.foreground": "#D19A66",
-        "editor.selectionBackground": "#303644",
-      },
-    });
-  }
+  const activeLogEvent = opponentLog[logIndex];
 
   return (
-    <main className="min-h-screen bg-[#0a0a0b] text-zinc-100">
-      <div className="border-b border-zinc-800 bg-[#111112]">
-        <div className="mx-auto flex w-full max-w-[1540px] flex-wrap items-center justify-between gap-2 px-4 py-3 md:px-6">
-          <div className="flex items-center gap-3">
-            <p className="text-lg font-semibold tracking-tight">Duels</p>
-            <Badge variant="outline" className="border-zinc-700 text-zinc-300">
-              Match #8421
-            </Badge>
-            <p className="text-xs text-zinc-500">Best of 3 • 12:42 remaining</p>
-          </div>
+    <main className="h-screen overflow-hidden bg-[#070707] px-4 py-4 text-zinc-100 md:px-6 md:py-6">
+      <div className="mx-auto flex h-full w-full max-w-[1580px] min-h-0 flex-col gap-3 font-[family-name:var(--font-geist-mono)] xl:flex-row">
+        <div className="flex min-h-0 flex-col gap-3 xl:w-1/2 xl:min-w-0">
+          <Card className="shrink-0 overflow-visible border-dashed border-zinc-700/80 bg-[#101011]">
+          <CardContent className="space-y-1.5 overflow-visible py-2.5">
+            <div className="grid items-center gap-2 xl:grid-cols-[1fr_auto_1fr]">
+              <div className="flex items-center gap-2">
+                <Badge className="border-dashed border-zinc-700 bg-zinc-900/70 text-zinc-300">
+                  Match #8421
+                </Badge>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center gap-1.5 rounded-md border border-dashed border-zinc-700 bg-zinc-950/80 px-1.5 py-1">
+                  <Avatar className="size-6">
+                    <AvatarFallback>YU</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-zinc-300">you</span>
+                </div>
+                <div className="flex items-center gap-1.5 rounded-md border border-dashed border-zinc-700 bg-zinc-950/80 px-1.5 py-1">
+                  <Avatar className="size-6">
+                    <AvatarFallback>OP</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-zinc-300">opponent</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-start gap-2 text-xs text-zinc-400 xl:justify-end">
+                <HugeiconsIcon icon={Clock01Icon} size={14} className="text-[#ff4f00]" />
+                12:42 remaining
+              </div>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <Select value={activeProblem.id} onValueChange={setActiveProblemId}>
-              <SelectTrigger className="h-8 w-[220px] border-zinc-700 bg-zinc-900 text-xs text-zinc-200">
-                <SelectValue placeholder="Select problem" />
-              </SelectTrigger>
-              <SelectContent>
+            <div className="flex items-center gap-2 pb-1">
+              <div className="flex min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap">
                 {problems.map((problem) => (
-                  <SelectItem key={problem.id} value={problem.id}>
-                    {problem.id}: {problem.title}
-                  </SelectItem>
+                  <Button
+                    key={problem.id}
+                    size="sm"
+                    onClick={() => setActiveProblemId(problem.id)}
+                    className={`relative h-8 min-w-9 shrink-0 overflow-hidden border-dashed px-0 text-[11px] ${
+                      problem.id === activeProblem.id
+                        ? "border-[#ff4f00]/70 bg-[#ff4f00]/10 text-[#ff8a50]"
+                        : "border-zinc-700 bg-zinc-900/70 text-zinc-200"
+                    }`}
+                  >
+                    <span
+                      className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 rounded-full bg-zinc-600/35"
+                    />
+                    <span className="relative z-10">{problem.id.replace("P", "")}</span>
+                  </Button>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
 
-            <Button
-              size="sm"
-              className="h-8 border border-zinc-600 bg-gradient-to-b from-zinc-800 to-zinc-900 text-xs text-zinc-100 hover:from-zinc-700 hover:to-zinc-800"
-            >
-              Run
-            </Button>
-            <Button
-              size="sm"
-              className="h-8 border border-orange-600 bg-gradient-to-b from-orange-600 to-orange-800 text-xs font-medium text-white hover:from-orange-500 hover:to-orange-700"
-            >
-              Submit
-            </Button>
-          </div>
-        </div>
-      </div>
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <Button
+                  size="sm"
+                  className="h-8 border border-dashed border-zinc-600 bg-zinc-900 px-4 text-xs text-zinc-100 hover:bg-zinc-800"
+                >
+                  Run
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 border border-[#ff4f00]/80 bg-[#ff4f00] px-4 text-xs text-white hover:bg-[#e64700]"
+                >
+                  Submit
+                </Button>
+              </div>
+            </div>
 
-      <div className="mx-auto flex w-full max-w-[1540px] flex-col gap-4 px-4 py-4 md:px-6">
-        <Card className="border-zinc-800 bg-[#111213]">
-          <CardContent className="space-y-3 pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2 text-zinc-300">
-                <span className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1">
-                  Score: You {summary.youWins} - {summary.oppWins} Opponent
-                </span>
-                <span className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1">
-                  Active: {activeProblem.id} / {problems.length}
+            <div className="my-1.5 flex h-10 w-full min-w-0 items-center gap-2 rounded-md border border-dashed border-zinc-700 bg-zinc-950/80 px-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <HugeiconsIcon icon={ViewIcon} size={14} className="text-[#ff4f00]" />
+                <Badge className="h-6 border-dashed border-zinc-700 bg-zinc-900/80 px-2 text-[10px] text-zinc-400">
+                  OPP LOG
+                </Badge>
+                <span className="text-xs text-zinc-500">{activeLogEvent.at}</span>
+                <Badge className="h-6 border-dashed border-zinc-700 bg-zinc-900/80 px-2 text-[10px] text-zinc-400">
+                  {activeLogEvent.type}
+                </Badge>
+                <span className="min-w-0 flex-1 truncate text-sm text-zinc-300">
+                  {activeLogEvent.msg}
                 </span>
               </div>
-              <span className="text-zinc-500">Overall duel progress</span>
-            </div>
-
-            <ProgressBar
-              label="Your total passed tests"
-              passed={summary.youTests}
-              total={summary.totalTests}
-            />
-            <ProgressBar
-              label="Opponent total passed tests"
-              passed={summary.oppTests}
-              total={summary.totalTests}
-              active={summary.oppTests > summary.youTests}
-            />
-
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              {problems.map((problem) => (
-                <div
-                  key={problem.id}
-                  className={`rounded border px-2 py-1 text-[11px] ${
-                    problem.id === activeProblem.id
-                      ? "border-orange-600 bg-zinc-900 text-zinc-100"
-                      : "border-zinc-700 bg-zinc-900 text-zinc-400"
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <span
+                  className={`size-1.5 rounded-full ${
+                    activeLogEvent.tone === "ok"
+                      ? "bg-emerald-300"
+                      : activeLogEvent.tone === "warn"
+                        ? "bg-[#ff4f00]"
+                        : "bg-zinc-500"
                   }`}
+                />
+                <span className="text-[11px] text-zinc-500">
+                  {logIndex + 1}/{opponentLog.length}
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => setLogIndex((v) => Math.max(0, v - 1))}
+                  disabled={logIndex === 0}
+                  className="h-7 w-7 border border-dashed border-zinc-700 bg-zinc-900 p-0 text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
                 >
-                  {problem.id} • {stateLabel(problem.state)}
-                </div>
-              ))}
+                  <HugeiconsIcon icon={ArrowUp01Icon} size={13} />
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    setLogIndex((v) => Math.min(opponentLog.length - 1, v + 1))
+                  }
+                  disabled={logIndex === opponentLog.length - 1}
+                  className="h-7 w-7 border border-dashed border-zinc-700 bg-zinc-900 p-0 text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+                >
+                  <HugeiconsIcon icon={ArrowDown01Icon} size={13} />
+                </Button>
+              </div>
             </div>
+
           </CardContent>
         </Card>
 
-        <section className="grid gap-4 xl:grid-cols-[1.02fr_1.18fr]">
-          <Card className="border-zinc-800 bg-[#111213]">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <CardTitle className="text-base">{activeProblem.title}</CardTitle>
-                  <p className="mt-1 text-xs text-zinc-500">Problem {activeProblem.id}</p>
-                </div>
-                <Badge variant="outline" className="border-zinc-700 text-zinc-300">
-                  {activeProblem.difficulty}
-                </Badge>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4 text-sm">
-              <p className="text-zinc-300">{activeProblem.description}</p>
-
-              <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-                <p className="text-xs uppercase tracking-wide text-zinc-500">Examples</p>
-                {activeProblem.examples.map((example, idx) => (
-                  <div key={`${activeProblem.id}-${idx}`} className="font-mono text-xs text-zinc-300">
-                    <p>Input: {example.input}</p>
-                    <p>Output: {example.output}</p>
-                    {example.note ? <p>Note: {example.note}</p> : null}
+          <Card className="min-h-0 flex-1 border-dashed border-zinc-700/80 bg-[#101011]">
+            <CardContent className="min-h-0 overflow-y-auto pb-5 pt-3 [font-family:Inter,sans-serif]">
+              <div className="space-y-5 px-1 text-zinc-300">
+                <section className="space-y-3">
+                  <div>
+                    <h2 className="text-4xl tracking-tight text-zinc-100">{activeProblem.title}</h2>
+                    <p className="mt-1 text-sm text-zinc-500">Problem {activeProblem.id}</p>
                   </div>
-                ))}
-              </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge className="border-dashed border-zinc-700 bg-zinc-900/70 text-zinc-300">
+                      {activeProblem.difficulty}
+                    </Badge>
+                    {(activeProblem.guarantees ?? []).map((g) => (
+                      <Badge
+                        key={g}
+                        className="border-dashed border-zinc-700 bg-zinc-900/70 text-zinc-300"
+                      >
+                        {g}
+                      </Badge>
+                    ))}
+                  </div>
+                </section>
 
-              <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-                <p className="text-xs uppercase tracking-wide text-zinc-500">Live Tests</p>
-                <div className="text-xs text-zinc-300">
-                  <p>Case 01: Pass</p>
-                  <p>Case 02: Pass</p>
-                  <p>Case 03: Fail (boundary condition)</p>
-                  <p>Case 04: Running...</p>
-                </div>
+                <section className="space-y-2">
+                  <h3 className="text-xl text-zinc-100">Description</h3>
+                  <div className="space-y-3 text-[15px] leading-7">
+                    {activeProblem.description.split("\n\n").map((para, idx) => (
+                      <p key={`desc-${idx}`}>{para}</p>
+                    ))}
+                  </div>
+                </section>
+
+                {activeProblem.inputSpec?.length ? (
+                  <section className="space-y-2">
+                    <h3 className="text-xl text-zinc-100">Input</h3>
+                    <div className="space-y-1.5 text-[15px] leading-7">
+                      {activeProblem.inputSpec.map((line) => (
+                        <p key={line}>{line}</p>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+
+                {activeProblem.outputSpec?.length ? (
+                  <section className="space-y-2">
+                    <h3 className="text-xl text-zinc-100">Output</h3>
+                    <div className="space-y-1.5 text-[15px] leading-7">
+                      {activeProblem.outputSpec.map((line) => (
+                        <p key={line}>{line}</p>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+
+                {(activeProblem.sampleInput || activeProblem.sampleOutput) ? (
+                  <section className="space-y-2">
+                    <h3 className="text-xl text-zinc-100">Sample</h3>
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      {activeProblem.sampleInput ? (
+                        <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-950/65 p-3">
+                          <p className="mb-2 text-xs uppercase tracking-[0.14em] text-zinc-500">
+                            Sample Input
+                          </p>
+                          <pre className="overflow-x-auto font-mono text-xs text-zinc-200">
+                            {activeProblem.sampleInput}
+                          </pre>
+                        </div>
+                      ) : null}
+                      {activeProblem.sampleOutput ? (
+                        <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-950/65 p-3">
+                          <p className="mb-2 text-xs uppercase tracking-[0.14em] text-zinc-500">
+                            Sample Output
+                          </p>
+                          <pre className="overflow-x-auto font-mono text-xs text-zinc-200">
+                            {activeProblem.sampleOutput}
+                          </pre>
+                        </div>
+                      ) : null}
+                    </div>
+                  </section>
+                ) : null}
+
+                {activeProblem.notes?.length ? (
+                  <section className="space-y-2">
+                    <h3 className="text-xl text-zinc-100">Note</h3>
+                    <div className="space-y-1.5 text-[15px] leading-7">
+                      {activeProblem.notes.map((line) => (
+                        <p key={line}>{line}</p>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          <Card className="border-zinc-800 bg-[#111213]">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-sm">Code Editor</CardTitle>
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                  <HugeiconsIcon icon={Clock01Icon} strokeWidth={2} />
-                  last save 4s ago
-                </div>
-              </div>
-            </CardHeader>
+        <Card className="flex h-full min-h-0 flex-col border-dashed border-zinc-700/80 bg-[#101011] xl:flex-1 xl:min-w-0">
+          <CardContent className="min-h-0 flex-1 space-y-2 overflow-y-auto pt-4">
+            <div className="h-[68vh] min-h-[520px] overflow-hidden rounded-lg border border-dashed border-zinc-700">
+              <Editor
+                theme="cfetch-one-dark"
+                defaultLanguage="cpp"
+                value={code}
+                beforeMount={defineTheme}
+                onChange={(value) => setCode(value || "")}
+                options={{
+                  fontSize: 13,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  padding: { top: 12, bottom: 12 },
+                }}
+              />
+            </div>
 
-            <CardContent className="space-y-3">
-              <div className="h-[68vh] min-h-[520px] overflow-hidden rounded-lg border border-zinc-800">
-                <Editor
-                  theme="cfetch-one-dark"
-                  defaultLanguage="cpp"
-                  value={code}
-                  beforeMount={defineTheme}
-                  onChange={(value) => setCode(value || "")}
-                  options={{
-                    fontSize: 13,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    padding: { top: 12, bottom: 12 },
-                  }}
-                />
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-                <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-2.5 text-xs text-zinc-400">
-                  <div className="mb-1 flex items-center gap-2 text-zinc-500">
-                    <HugeiconsIcon icon={CodeIcon} strokeWidth={2} />
-                    Opponent activity
+            <div className="grid min-h-0 gap-2">
+              <Card className="max-h-[250px] overflow-hidden border-dashed border-zinc-700 bg-zinc-950/70">
+                <CardHeader className="pb-1.5">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xs uppercase tracking-[0.16em] text-zinc-500">
+                      Your Test Runs
+                    </CardTitle>
+                    <Badge className="border-dashed border-zinc-700 bg-zinc-900/70 text-zinc-400">
+                      custom cases
+                    </Badge>
                   </div>
-                  <p>[12:01] Compile success</p>
-                  <p>[12:04] P1 Case 05 failed</p>
-                  <p>[12:07] P1 Passed 21/25</p>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Button
-                    size="sm"
-                    className="h-8 border border-zinc-600 bg-gradient-to-b from-zinc-800 to-zinc-900 text-xs text-zinc-100 hover:from-zinc-700 hover:to-zinc-800"
-                  >
-                    Run custom input
-                  </Button>
-                  <Button
-                    onClick={handlePeek}
-                    disabled={peekLeft <= 0 || peekTimer > 0}
-                    size="sm"
-                    className="h-8 border border-orange-600 bg-gradient-to-b from-orange-600 to-orange-800 text-xs text-white hover:from-orange-500 hover:to-orange-700"
-                  >
-                    <HugeiconsIcon icon={ViewIcon} strokeWidth={2} />
-                    Peek • {peekLeft} left
-                  </Button>
-                </div>
-              </div>
-
-              {peekTimer > 0 ? (
-                <div className="rounded-md border border-orange-700 bg-[#2a1609] p-2 text-[11px] text-orange-200">
-                  <p>Peek active for {peekTimer}s</p>
-                  <pre className="mt-1 overflow-x-auto text-orange-100">{`unordered_map<char,int> m;
-if (m.count(s[r])) left = ...;
-ans = max(ans, r - left + 1);`}</pre>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        </section>
+                </CardHeader>
+                <CardContent className="space-y-3 overflow-y-auto px-4 pb-4 pt-2">
+                  <Card className="border-dashed border-zinc-700 bg-zinc-900/70">
+                    <CardContent className="space-y-1 px-3 py-3 text-sm text-zinc-300">
+                      <p className="text-zinc-400">Input</p>
+                      <pre className="font-mono text-xs text-zinc-200">{`7 3\n5 1 9 3 4 8 2\n1 4\n2 7\n3 6`}</pre>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-dashed border-zinc-700 bg-zinc-900/70">
+                    <CardContent className="space-y-1 px-3 py-3 text-sm text-zinc-300">
+                      <p className="text-zinc-400">Output</p>
+                      <pre className="font-mono text-xs text-zinc-200">{`18\n27\n24`}</pre>
+                      <p className="text-xs text-emerald-300">All assertions passed</p>
+                    </CardContent>
+                  </Card>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Button
+                      size="sm"
+                      className="h-9 border border-dashed border-zinc-600 bg-zinc-900 text-xs text-zinc-100 hover:bg-zinc-800"
+                    >
+                      Run Tests
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-9 border border-[#ff4f00]/80 bg-[#ff4f00] text-xs text-white hover:bg-[#e64700]"
+                    >
+                      Submit Main
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
