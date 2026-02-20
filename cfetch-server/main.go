@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -244,6 +245,36 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (r *RoomManager) deleteRoom(id uuid.UUID) {
+	room := r.Rooms[id]
+
+	for _, c := range room.Clients {
+		c.Conn.Write(context.Background(), websocket.MessageText, []byte("x won"))
+		c.Conn.Close(websocket.StatusNormalClosure, "")
+	}
+
+	delete(roomManager.Rooms, id)
+}
+
+func (r *RoomManager) assessRooms() {
+	for {
+		for id, room := range roomManager.Rooms {
+			var roomDone = true
+			for _, c := range room.Clients {
+				if !c.Submitted {
+					roomDone = false
+				}
+			}
+			if roomDone && len(room.Clients) != 0 {
+				fmt.Println("deleting room")
+				r.deleteRoom(id)
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+}
+
 func main() {
 	r := chi.NewRouter()
 
@@ -258,6 +289,8 @@ func main() {
 		Addr:    ":8080",
 		Handler: r,
 	}
+
+	go roomManager.assessRooms()
 
 	log.Fatal(server.ListenAndServe())
 }
