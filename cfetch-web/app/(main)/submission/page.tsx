@@ -159,9 +159,11 @@ export default function Submission() {
     });
   }
 
-  function handleLanguageChange(nextLanguage: string) {
-    setLanguage(nextLanguage);
-    setCode(starterCodeByLanguage[nextLanguage] ?? "");
+  function handleLanguageChange(nextLanguage: string | null) {
+    if (nextLanguage) {
+      setLanguage(nextLanguage);
+      setCode(starterCodeByLanguage[nextLanguage] ?? "");
+    }
   }
 
   const problemTabs: ProblemTab[] = [

@@ -16,27 +16,38 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-type PingingDatum = {
+type MultiLineDatum = {
   label: string;
-  value: number;
+  primary: number;
+  secondary?: number;
 };
 
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--chart-2)",
-  },
-} satisfies ChartConfig;
-
-export function PingingDotChart({
-  data,
-  title = "Pinging Dot Chart",
+export function DottedMultiLineChart({
+  title = "Multi Line Chart",
   description = "",
+  data,
+  primaryLabel = "Primary",
+  secondaryLabel = "Secondary",
+  showSecondary = true,
 }: {
-  data: PingingDatum[];
   title?: string;
   description?: string;
+  data: MultiLineDatum[];
+  primaryLabel?: string;
+  secondaryLabel?: string;
+  showSecondary?: boolean;
 }) {
+  const dynamicConfig = {
+    primary: {
+      label: primaryLabel,
+      color: "var(--chart-2)",
+    },
+    secondary: {
+      label: secondaryLabel,
+      color: "var(--chart-5)",
+    },
+  } satisfies ChartConfig;
+
   return (
     <Card>
       <CardHeader>
@@ -44,7 +55,7 @@ export function PingingDotChart({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={dynamicConfig}>
           <LineChart
             accessibilityLayer
             data={data}
@@ -66,49 +77,24 @@ export function PingingDotChart({
               content={<ChartTooltipContent hideLabel />}
             />
             <Line
-              dataKey="value"
+              dataKey="primary"
               type="linear"
-              stroke="var(--color-desktop)"
+              stroke="var(--color-primary)"
+              dot={false}
               strokeDasharray="4 4"
-              dot={<CustomizedDot />}
             />
+            {showSecondary ? (
+              <Line
+                dataKey="secondary"
+                type="linear"
+                stroke="var(--color-secondary)"
+                dot={false}
+                strokeDasharray="6 6"
+              />
+            ) : null}
           </LineChart>
         </ChartContainer>
       </CardContent>
     </Card>
   );
 }
-
-const CustomizedDot = (props: React.SVGProps<SVGCircleElement>) => {
-  const { cx, cy, stroke } = props;
-
-  return (
-    <g>
-      {/* Main dot */}
-      <circle cx={cx} cy={cy} r={3} fill={stroke} />
-      {/* Ping animation circles */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={3}
-        stroke={stroke}
-        fill="none"
-        strokeWidth="1"
-        opacity="0.8"
-      >
-        <animate
-          attributeName="r"
-          values="3;10"
-          dur="1s"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="opacity"
-          values="0.8;0"
-          dur="1s"
-          repeatCount="indefinite"
-        />
-      </circle>
-    </g>
-  );
-};

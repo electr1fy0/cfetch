@@ -191,7 +191,7 @@ export default function DuelsPage() {
     <main className="h-screen overflow-hidden bg-[#070707] px-4 py-4 text-zinc-100 md:px-6 md:py-6">
       <div className="mx-auto flex h-full w-full max-w-[1580px] min-h-0 flex-col gap-3 font-[family-name:var(--font-geist-mono)] xl:flex-row">
         <div className="flex min-h-0 flex-col gap-3 xl:w-1/2 xl:min-w-0">
-          <Card className="shrink-0 overflow-visible border-dashed border-zinc-700/80 bg-[#101011]">
+          <Card className="shrink-0 overflow-visible border-dashed border-zinc-700/80 bg-[#171717]">
           <CardContent className="space-y-1.5 overflow-visible py-2.5">
             <div className="grid items-center gap-2 xl:grid-cols-[1fr_auto_1fr]">
               <div className="flex items-center gap-2">
@@ -307,7 +307,7 @@ export default function DuelsPage() {
           </CardContent>
         </Card>
 
-          <Card className="min-h-0 flex-1 border-dashed border-zinc-700/80 bg-[#101011]">
+          <Card className="min-h-0 flex-1 border-dashed border-zinc-700/80 bg-[#171717]">
             <CardContent className="min-h-0 overflow-y-auto pb-5 pt-3 [font-family:Inter,sans-serif]">
               <div className="space-y-5 px-1 text-zinc-300">
                 <section className="space-y-3">
@@ -404,7 +404,7 @@ export default function DuelsPage() {
           </Card>
         </div>
 
-        <Card className="flex h-full min-h-0 flex-col border-dashed border-zinc-700/80 bg-[#101011] xl:flex-1 xl:min-w-0">
+        <Card className="flex h-full min-h-0 flex-col border-dashed border-zinc-700/80 bg-[#171717] xl:flex-1 xl:min-w-0">
           <CardContent className="min-h-0 flex-1 space-y-2 overflow-y-auto pt-4">
             <div className="h-[68vh] min-h-[520px] overflow-hidden rounded-lg border border-dashed border-zinc-700">
               <Editor

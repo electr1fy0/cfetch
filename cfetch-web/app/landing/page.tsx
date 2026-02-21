@@ -24,7 +24,7 @@ export default async function Landing() {
   return (
     <div className="h-screen overflow-hidden bg-[#070707] px-4 py-6 text-zinc-100 sm:px-6 sm:py-8">
       <main className="mx-auto flex h-full max-w-7xl flex-col font-[family-name:var(--font-geist-mono)]">
-        <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-zinc-700/70 bg-[#101011]">
+        <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-zinc-700/70 bg-[#171717]">
           <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.02)_0px,rgba(255,255,255,0.02)_1px,transparent_1px,transparent_7px)]" />
 
           <header className="relative flex items-center justify-between gap-3 border-b border-dashed border-zinc-700/70 px-4 py-3 sm:px-6">

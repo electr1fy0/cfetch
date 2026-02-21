@@ -15,8 +15,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Badge } from "@/components/ui/badge";
-import { TrendingDown } from "lucide-react";
 
 type PieDatum = {
   name: string;
@@ -73,16 +71,7 @@ export function IncreaseSizePieChart({
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle>
-          {title}
-          <Badge
-            variant="outline"
-            className="text-red-500 bg-red-500/10 border-none ml-2"
-          >
-            <TrendingDown className="h-4 w-4" />
-            <span>5.2%</span>
-          </Badge>
-        </CardTitle>
+        <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">

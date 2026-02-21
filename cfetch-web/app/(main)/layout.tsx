@@ -5,6 +5,14 @@ import { AppSidebar } from "@/components/app-sidebar";
 export default async function Layout({ children }: { children: React.ReactNode }) {
   const session = await auth();
 
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-stone-950">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar avatarUrl={session?.user?.image ?? null} />
