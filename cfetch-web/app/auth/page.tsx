@@ -18,8 +18,7 @@ export default async function AuthFinalizePage() {
     await dbPool.query(
       `UPDATE users
        SET name = $1
-       WHERE email = $2
-         AND (name IS NULL OR name = '')`,
+       WHERE email = $2`,
       [handle, session.user.email],
     );
   }

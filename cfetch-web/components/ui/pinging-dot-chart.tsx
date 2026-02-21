@@ -16,60 +16,43 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { TrendingUp } from "@hugeicons/core-free-icons";
+import { TrendingUp } from "lucide-react";
 
-type PingingDotChartPoint = {
+type PingingDatum = {
   label: string;
-  rating: number;
+  value: number;
 };
 
 const chartConfig = {
-  rating: {
-    label: "Rating",
+  desktop: {
+    label: "Desktop",
     color: "var(--chart-2)",
   },
 } satisfies ChartConfig;
 
 export function PingingDotChart({
   data,
-  title = "Codeforces rating trend",
-  description,
+  title = "Pinging Dot Chart",
+  description = "",
 }: {
-  data: PingingDotChartPoint[];
+  data: PingingDatum[];
   title?: string;
   description?: string;
 }) {
-  const first = data[0]?.rating ?? 0;
-  const last = data[data.length - 1]?.rating ?? 0;
-  const delta = last - first;
-  const deltaText = `${delta >= 0 ? "+" : ""}${delta}`;
-
-  if (data.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>No rating updates available.</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>
           {title}
           <Badge
-            variant={delta >= 0 ? "success-light" : "destructive-light"}
-            className="ml-2 border-none"
+            variant="outline"
+            className="text-green-500 bg-green-500/10 border-none ml-2"
           >
-            <HugeiconsIcon icon={TrendingUp} size={16} strokeWidth={2} />
-            <span>{deltaText}</span>
+            <TrendingUp className="h-4 w-4" />
+            <span>5.2%</span>
           </Badge>
         </CardTitle>
-        <CardDescription>{description ?? "Recent contests"}</CardDescription>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -87,16 +70,16 @@ export function PingingDotChart({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value: string) => value}
+              tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
             <Line
-              dataKey="rating"
+              dataKey="value"
               type="linear"
-              stroke="var(--color-rating)"
+              stroke="var(--color-desktop)"
               strokeDasharray="4 4"
               dot={<CustomizedDot />}
             />

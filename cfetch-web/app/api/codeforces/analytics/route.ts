@@ -30,8 +30,16 @@ type CFSubmission = {
 };
 
 async function cfFetch<T>(url: string): Promise<T> {
-  const res = await fetch(url, { next: { revalidate: 180 } });
-  if (!res.ok) throw new Error("Codeforces request failed");
+  const res = await fetch(url, {
+    next: { revalidate: 180 },
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "cfetch/1.0 (+https://localhost)",
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Codeforces request failed with status ${res.status}`);
+  }
   const json = (await res.json()) as CFResponse<T>;
   if (json.status !== "OK") throw new Error(json.comment ?? "Codeforces API error");
   return json.result;
@@ -79,7 +87,9 @@ export async function GET(request: NextRequest) {
       contribution: user.contribution,
       friendOfCount: user.friendOfCount,
     });
-  } catch {
-    return NextResponse.json({ error: "Failed to load Codeforces analytics" }, { status: 502 });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to load Codeforces analytics";
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }
