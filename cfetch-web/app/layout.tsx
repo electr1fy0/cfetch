@@ -21,7 +21,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${geistPixelSquare.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${geistPixelTriangle.variable} ${geistPixelSquare.variable}`}
     >
       <body>{children}</body>
     </html>

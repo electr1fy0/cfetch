@@ -1,13 +1,11 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   ChartConfig,
@@ -23,19 +21,17 @@ type MultiLineDatum = {
 };
 
 export function DottedMultiLineChart({
-  title = "Multi Line Chart",
-  description = "",
   data,
   primaryLabel = "Primary",
   secondaryLabel = "Secondary",
   showSecondary = true,
+  className,
 }: {
-  title?: string;
-  description?: string;
   data: MultiLineDatum[];
   primaryLabel?: string;
   secondaryLabel?: string;
   showSecondary?: boolean;
+  className?: string;
 }) {
   const dynamicConfig = {
     primary: {
@@ -49,12 +45,8 @@ export function DottedMultiLineChart({
   } satisfies ChartConfig;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Card className={cn("border-zinc-800 bg-[#171717]", className)}>
+      <CardContent className="p-6">
         <ChartContainer config={dynamicConfig}>
           <LineChart
             accessibilityLayer

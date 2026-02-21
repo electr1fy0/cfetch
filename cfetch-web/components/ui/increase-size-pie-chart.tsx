@@ -1,13 +1,11 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { LabelList, Pie, PieChart, Cell } from "recharts";
 
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   ChartConfig,
@@ -54,12 +52,10 @@ const chartConfig = {
 
 export function IncreaseSizePieChart({
   data,
-  title = "Sized Pie Chart",
-  description = "",
+  className,
 }: {
   data: PieDatum[];
-  title?: string;
-  description?: string;
+  className?: string;
 }) {
   const normalizedData = data.map((entry, idx) => ({
     ...entry,
@@ -69,11 +65,7 @@ export function IncreaseSizePieChart({
   const total = sortedChartData.reduce((sum, d) => sum + d.value, 0) || 1;
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="items-center pb-0">
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
+    <Card className={cn("flex flex-col border-zinc-800 bg-[#171717]", className)}>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}

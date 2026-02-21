@@ -64,7 +64,7 @@ export function AppSidebar({ avatarUrl }: { avatarUrl: string | null }) {
             CF
           </div>
           <div>
-            <p className="text-sm font-semibold leading-none text-stone-100">
+            <p className="font-[family-name:var(--font-geist-pixel-triangle)] text-sm text-stone-100">
               cfetch
             </p>
             <p className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-wide text-stone-500">

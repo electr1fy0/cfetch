@@ -1,13 +1,11 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   ChartConfig,
@@ -30,20 +28,14 @@ const chartConfig = {
 
 export function PingingDotChart({
   data,
-  title = "Pinging Dot Chart",
-  description = "",
+  className,
 }: {
   data: PingingDatum[];
-  title?: string;
-  description?: string;
+  className?: string;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Card className={cn("border-zinc-800 bg-[#171717]", className)}>
+      <CardContent className="p-6">
         <ChartContainer config={chartConfig}>
           <LineChart
             accessibilityLayer

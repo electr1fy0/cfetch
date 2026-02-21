@@ -224,7 +224,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
   const registration = new Date(
     data.basic.registrationDate
   ).toLocaleDateString();
-  const verdictBars = data.submissions.verdictBreakdown.slice(0, 10);
+
   const rankColor = getRankColor(data.basic.rank);
 
   return (
@@ -328,15 +328,18 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
           </Card>
         </div>
 
-        <div className="space-y-20">
-          <PingingDotChart
+        <div className="space-y-32">
+          <ChartSection
             title="Rating Trend Over Time"
             description="Contest timeline and rating evolution."
-            data={data.rating.trend.map((row) => ({
-              label: row.at,
-              value: row.rating,
-            }))}
-          />
+          >
+            <PingingDotChart
+              data={data.rating.trend.map((row) => ({
+                label: row.at,
+                value: row.rating,
+              }))}
+            />
+          </ChartSection>
 
           <ChartSection
             title="Rating Change Per Contest"
@@ -503,18 +506,21 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
             </Card>
           </ChartSection>
 
-          <DottedMultiLineChart
+          <ChartSection
             title="Difficulty Progression Over Time"
             description="Average and highest solved rating by month."
-            primaryLabel="Average Rating"
-            secondaryLabel="Highest Rating"
-            showSecondary
-            data={data.difficultyProgression.map((row) => ({
-              label: row.month,
-              primary: row.avgRating,
-              secondary: row.maxRating,
-            }))}
-          />
+          >
+            <DottedMultiLineChart
+              primaryLabel="Average Rating"
+              secondaryLabel="Highest Rating"
+              showSecondary
+              data={data.difficultyProgression.map((row) => ({
+                label: row.month,
+                primary: row.avgRating,
+                secondary: row.maxRating,
+              }))}
+            />
+          </ChartSection>
 
           <ChartSection
             title="Upsolve Analytics"
@@ -555,50 +561,29 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
             </Card>
           </ChartSection>
 
-          <IncreaseSizePieChart
+          <ChartSection
             title="Submission Verdict Proportions"
             description="Proportional verdict split from profile submissions."
-            data={data.submissions.verdictBreakdown.slice(0, 8).map((row, idx) => ({
-              name: row.name,
-              value: row.value,
-              fill: [
-                "#22c55e",
-                "#ef4444",
-                "#38bdf8",
-                "#f59e0b",
-                "#a78bfa",
-                "#f43f5e",
-                "#06b6d4",
-                "#84cc16",
-              ][idx % 8],
-            }))}
-          />
-
-          <ChartSection
-            title="Verdict Counts"
-            description="Total breakdown of submission verdicts."
           >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="h-72 p-6">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={verdictBars}>
-                    <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fill: "#a1a1aa", fontSize: 11 }}
-                    />
-                    <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
-                    <Tooltip {...darkTooltipProps} />
-                    <Bar
-                      dataKey="value"
-                      fill="#f97316"
-                      shape={<HatchedBarShape />}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <IncreaseSizePieChart
+              data={data.submissions.verdictBreakdown.slice(0, 8).map((row, idx) => ({
+                name: row.name,
+                value: row.value,
+                fill: [
+                  "#22c55e",
+                  "#ef4444",
+                  "#38bdf8",
+                  "#f59e0b",
+                  "#a78bfa",
+                  "#f43f5e",
+                  "#06b6d4",
+                  "#84cc16",
+                ][idx % 8],
+              }))}
+            />
           </ChartSection>
+
+
 
           <ChartSection
             title="Tag Coverage"

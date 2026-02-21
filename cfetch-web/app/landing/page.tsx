@@ -28,8 +28,8 @@ export default async function Landing() {
           <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.02)_0px,rgba(255,255,255,0.02)_1px,transparent_1px,transparent_7px)]" />
 
           <header className="relative flex items-center justify-between gap-3 border-b border-dashed border-zinc-700/70 px-4 py-3 sm:px-6">
-            <p className="text-xs uppercase tracking-[0.24em] text-zinc-400">
-              Cfetch
+            <p className="font-[family-name:var(--font-geist-pixel-triangle)] text-sm text-zinc-400">
+              cfetch
             </p>
             <form
               action={async () => {
