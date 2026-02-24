@@ -12,13 +12,13 @@ export default function LandingPage() {
       <div className="relative z-10 w-full max-w-2xl px-6 py-12 flex flex-col items-center text-center space-y-12">
         
         {/* Header / Logo */}
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
-          <h1 className="font-[family-name:var(--font-geist-pixel-square)] text-5xl md:text-7xl font-bold tracking-tight text-white drop-shadow-sm">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
+          <h1 className="font-[family-name:var(--font-geist-pixel-square)] text-6xl md:text-9xl font-bold tracking-tight text-white drop-shadow-sm">
             cfetch
           </h1>
-          <p className="text-lg md:text-xl text-zinc-400 max-w-lg mx-auto leading-relaxed">
-            Advanced analytics for Codeforces. <br className="hidden sm:block" />
-            Visualize your progress, track your rating, and analyze your problem solving.
+          <p className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+            Elevate your competitive programming journey. <br className="hidden sm:block" />
+            Uncover insights, track growth, and optimize your strategy with precision analytics.
           </p>
         </div>
 
@@ -32,18 +32,18 @@ export default function LandingPage() {
         </div>
 
         {/* Footer / Features simplified */}
-        <div className="grid grid-cols-3 gap-8 w-full max-w-lg text-center pt-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
-           <div className="space-y-2">
-             <div className="text-2xl font-bold text-zinc-200">Stats</div>
-             <div className="text-xs text-zinc-500 uppercase tracking-widest">Deep Dive</div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full max-w-3xl text-center pt-12 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
+           <div className="group space-y-2 p-4 rounded-xl transition-colors hover:bg-zinc-900/30">
+             <div className="text-3xl font-bold text-zinc-200 group-hover:text-white transition-colors">Stats</div>
+             <div className="text-xs text-zinc-500 uppercase tracking-[0.2em] font-medium group-hover:text-zinc-400 transition-colors">Deep Dive</div>
            </div>
-           <div className="space-y-2">
-             <div className="text-2xl font-bold text-zinc-200">Graphs</div>
-             <div className="text-xs text-zinc-500 uppercase tracking-widest">Visualized</div>
+           <div className="group space-y-2 p-4 rounded-xl transition-colors hover:bg-zinc-900/30">
+             <div className="text-3xl font-bold text-zinc-200 group-hover:text-white transition-colors">Graphs</div>
+             <div className="text-xs text-zinc-500 uppercase tracking-[0.2em] font-medium group-hover:text-zinc-400 transition-colors">Visualized</div>
            </div>
-           <div className="space-y-2">
-             <div className="text-2xl font-bold text-zinc-200">No Login</div>
-             <div className="text-xs text-zinc-500 uppercase tracking-widest">Required</div>
+           <div className="group space-y-2 p-4 rounded-xl transition-colors hover:bg-zinc-900/30">
+             <div className="text-3xl font-bold text-zinc-200 group-hover:text-white transition-colors">No Login</div>
+             <div className="text-xs text-zinc-500 uppercase tracking-[0.2em] font-medium group-hover:text-zinc-400 transition-colors">Required</div>
            </div>
         </div>
       </div>

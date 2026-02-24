@@ -51,7 +51,7 @@ export function PingingDotChart({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
+              minTickGap={32}
             />
             <ChartTooltip
               cursor={false}
