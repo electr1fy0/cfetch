@@ -2,7 +2,7 @@ import HandleInput from "@/components/handle-input";
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-start bg-[#070707] text-zinc-100 overflow-hidden pb-20 pt-16 md:pt-24">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-[#070707] text-zinc-100 overflow-hidden pb-20">
       {/* Background Pattern */}
       <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.02)_0px,rgba(255,255,255,0.02)_1px,transparent_1px,transparent_7px)]" />
       
@@ -26,10 +26,6 @@ export default function LandingPage() {
         <div className="w-full max-w-md">
             <HandleInput />
         </div>
-      </div>
-      
-      <div className="absolute bottom-12 font-[family-name:var(--font-geist-pixel-square)] text-xs uppercase tracking-[0.2em] text-zinc-600">
-        <span className="border-b border-zinc-800 pb-1">Built for competitive programmers</span>
       </div>
     </div>
   );

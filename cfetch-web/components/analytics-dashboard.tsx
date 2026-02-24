@@ -220,7 +220,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <h2
-                  className={cn("text-4xl font-bold tracking-tight", rankColor)}
+                  className={cn("text-4xl font-bold tracking-tight font-[family-name:var(--font-geist-pixel-square)]", rankColor)}
                 >
                   {data.basic.handle}
                 </h2>
@@ -287,7 +287,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
               <div>
                 <span
                   className={cn(
-                    "text-6xl font-light tracking-tighter sm:text-7xl",
+                    "text-6xl font-light tracking-tighter sm:text-7xl font-[family-name:var(--font-geist-pixel-square)]",
                     rankColor
                   )}
                 >
