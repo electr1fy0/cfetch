@@ -28,8 +28,8 @@ export default function LandingPage() {
         </div>
       </div>
       
-      <div className="absolute bottom-6 text-zinc-600 text-sm">
-        Built for competitive programmers.
+      <div className="absolute bottom-12 font-[family-name:var(--font-geist-pixel-square)] text-xs uppercase tracking-[0.2em] text-zinc-600">
+        <span className="border-b border-zinc-800 pb-1">Built for competitive programmers</span>
       </div>
     </div>
   );
