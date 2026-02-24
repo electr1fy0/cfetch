@@ -16,18 +16,15 @@ export default function LandingPage() {
           <h1 className="font-[family-name:var(--font-geist-pixel-triangle)] text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm opacity-50">
             cfetch
           </h1>
-          <p className="font-[family-name:var(--font-geist-pixel-square)] text-3xl md:text-5xl font-medium text-zinc-400 max-w-3xl mx-auto leading-tight">
-            Codeforces analytics. <span className="text-zinc-100">Visualized.</span>
+          <p className="font-[family-name:var(--font-geist-pixel-square)] text-4xl md:text-6xl font-bold text-zinc-400 max-w-4xl mx-auto leading-[0.9] tracking-tighter">
+            Codeforces analytics. <br />
+            <span className="text-zinc-100">Visualized.</span>
           </p>
         </div>
 
         {/* Input Section */}
         <div className="w-full max-w-md">
-          <div className="p-1 rounded-xl bg-gradient-to-b from-zinc-700/50 to-zinc-900/50 p-[1px]">
-             <div className="bg-[#0a0a0a] rounded-[10px] p-6 border border-zinc-800/50 shadow-2xl">
-                <HandleInput />
-             </div>
-          </div>
+            <HandleInput />
         </div>
       </div>
       

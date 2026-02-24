@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Loader2, Terminal } from "lucide-react";
 
 export default function HandleInput() {
   const [handle, setHandle] = useState("");
@@ -20,32 +18,40 @@ export default function HandleInput() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 w-full">
-      <div className="space-y-2">
-        <label htmlFor="handle" className="sr-only">Codeforces Handle</label>
-        <Input
-          id="handle"
-          type="text"
-          placeholder="Enter Codeforces handle..."
-          value={handle}
-          onChange={(e) => setHandle(e.target.value)}
-          className="bg-[#171717] border-zinc-700/50 text-zinc-100 placeholder:text-zinc-500 h-12 text-base focus-visible:ring-zinc-600 focus-visible:border-zinc-500 transition-all"
-          autoFocus
-        />
-      </div>
-      <Button
-        type="submit"
-        className="w-full bg-zinc-100 text-zinc-950 hover:bg-white h-11 font-medium text-base shadow-lg shadow-zinc-900/20 transition-all active:scale-[0.98]"
-        disabled={!handle.trim() || isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <>
-            Analyze Profile <ArrowRight className="ml-2 h-4 w-4 opacity-70" />
-          </>
-        )}
-      </Button>
+    <form onSubmit={handleSubmit} className="w-full max-w-sm mx-auto group relative">
+        {/* Pixel-style corners/border effect using shadows or pseudoelements could be complex, 
+            so we'll use a sharp border with a diagonal pattern background on the container */}
+        
+        <div className="relative flex items-center p-1 bg-[#111] border border-zinc-800 shadow-[4px_4px_0px_0px_rgba(39,39,42,0.5)] transition-all focus-within:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] focus-within:border-zinc-600">
+            
+            {/* Diagonal stripe pattern overlay for texture */}
+            <div className="pointer-events-none absolute inset-0 opacity-[0.03] bg-[repeating-linear-gradient(45deg,#fff_0px,#fff_1px,transparent_1px,transparent_4px)]" />
+
+            <div className="pl-3 pr-2 text-zinc-500">
+                <Terminal className="w-5 h-5" />
+            </div>
+
+            <input
+                type="text"
+                value={handle}
+                onChange={(e) => setHandle(e.target.value)}
+                placeholder="handle"
+                className="flex-1 bg-transparent border-none text-zinc-100 placeholder:text-zinc-700 focus:ring-0 focus:outline-none font-[family-name:var(--font-geist-mono)] text-sm h-10 w-full min-w-0"
+                autoFocus
+            />
+
+            <button
+                type="submit"
+                disabled={!handle.trim() || isLoading}
+                className="ml-2 px-4 h-8 bg-zinc-200 hover:bg-white text-black font-[family-name:var(--font-geist-pixel-square)] text-xs uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[80px]"
+            >
+                {isLoading ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                    "Fetch"
+                )}
+            </button>
+        </div>
     </form>
   );
 }
