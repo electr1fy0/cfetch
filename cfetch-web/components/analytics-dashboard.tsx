@@ -1,5 +1,10 @@
-"use client";
-
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Bar,
   BarChart,
@@ -20,8 +25,6 @@ import {
   Target,
   Trophy,
 } from "lucide-react";
-
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { PingingDotChart } from "@/components/ui/pinging-dot-chart";
 import { IncreaseSizePieChart } from "@/components/ui/increase-size-pie-chart";
 import { DottedMultiLineChart } from "@/components/ui/dotted-multi-line";
@@ -196,30 +199,6 @@ function getRankColor(rank: string | null) {
   return "text-zinc-400"; // Newbie/Unknown
 }
 
-function ChartSection({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="min-h-[50vh] flex flex-col justify-center space-y-4">
-      <div>
-        <h3 className="text-lg font-medium leading-none text-zinc-100">
-          {title}
-        </h3>
-        <p className="mt-1.5 max-w-2xl text-sm text-zinc-400">
-          {description}
-        </p>
-      </div>
-      {children}
-    </div>
-  );
-}
-
 export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
   const registration = new Date(
     data.basic.registrationDate
@@ -228,17 +207,19 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
   const rankColor = getRankColor(data.basic.rank);
 
   return (
-    <div className="relative min-h-screen bg-[#070707] p-4 text-zinc-100 sm:p-8">
+    <div className="min-h-screen bg-[#070707] p-4 text-zinc-100 sm:p-6 lg:p-8">
       <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.02)_0px,rgba(255,255,255,0.02)_1px,transparent_1px,transparent_7px)]" />
-      
-      <div className="relative mx-auto w-full max-w-5xl space-y-32">
-        {/* Hero Section */}
-        <div className="grid gap-4 md:grid-cols-3">
+
+      <div className="relative mx-auto w-full max-w-[1600px] space-y-4">
+        {/* Header / Profile Stats Row */}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {/* Profile Card */}
-          <Card className="col-span-2 flex flex-col justify-between border-zinc-800 bg-[#171717] p-8 font-mono md:col-span-2">
+          <Card className="col-span-1 flex flex-col justify-between border-zinc-800 bg-[#171717] p-6 font-mono md:col-span-2 xl:col-span-2">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <h2 className={cn("text-4xl font-bold tracking-tight", rankColor)}>
+                <h2
+                  className={cn("text-4xl font-bold tracking-tight", rankColor)}
+                >
                   {data.basic.handle}
                 </h2>
                 <div className="flex items-center gap-2 text-sm">
@@ -257,7 +238,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
               </div>
             </div>
 
-            <div className="mt-10 grid grid-cols-2 gap-8 sm:grid-cols-4">
+            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div className="space-y-1">
                 <p className="text-[10px] uppercase tracking-wider text-zinc-500">
                   Registered
@@ -292,7 +273,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
           </Card>
 
           {/* Rating Card */}
-          <Card className="relative flex flex-col justify-center border-zinc-800 bg-[#171717] p-8 font-mono">
+          <Card className="relative col-span-1 flex flex-col justify-center border-zinc-800 bg-[#171717] p-6 font-mono md:col-span-2 xl:col-span-2">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <p className="text-[10px] uppercase tracking-wider text-zinc-500">
@@ -300,9 +281,14 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 </p>
                 <Award className={cn("h-4 w-4", rankColor)} />
               </div>
-              
+
               <div>
-                <span className={cn("text-7xl font-light tracking-tighter", rankColor)}>
+                <span
+                  className={cn(
+                    "text-6xl font-light tracking-tighter sm:text-7xl",
+                    rankColor
+                  )}
+                >
                   {data.basic.currentRating ?? "N/A"}
                 </span>
               </div>
@@ -310,11 +296,13 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
               <div className="flex items-center justify-between pt-2 text-xs">
                 <div className="space-y-0.5">
                   <p className="text-zinc-500">Max</p>
-                  <p className="text-zinc-200">{data.basic.maxRating ?? "N/A"}</p>
+                  <p className="text-zinc-200">
+                    {data.basic.maxRating ?? "N/A"}
+                  </p>
                 </div>
-                <div className="text-right space-y-0.5">
+                <div className="space-y-0.5 text-right">
                   <p className="text-zinc-500">To Max</p>
-                  <p className="text-zinc-200 flex items-center justify-end gap-1.5">
+                  <p className="flex items-center justify-end gap-1.5 text-zinc-200">
                     {data.basic.ratingDeltaFromMax}
                     {data.basic.ratingDeltaFromMax === 0 ? (
                       <Trophy className="h-3 w-3 text-yellow-500" />
@@ -328,25 +316,30 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
           </Card>
         </div>
 
-        <div className="space-y-32">
-          <ChartSection
-            title="Rating Trend Over Time"
-            description="Contest timeline and rating evolution."
-          >
-            <PingingDotChart
-              data={data.rating.trend.map((row) => ({
-                label: row.at,
-                value: row.rating,
-              }))}
-            />
-          </ChartSection>
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] md:col-span-2 xl:col-span-2 min-h-[400px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Rating Trend</CardTitle>
+              <CardDescription className="text-zinc-400">History over time.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <PingingDotChart
+                className="h-full border-none bg-transparent p-0"
+                data={data.rating.trend.map((row) => ({
+                  label: row.at,
+                  value: row.rating,
+                }))}
+              />
+            </CardContent>
+          </Card>
 
-          <ChartSection
-            title="Rating Change Per Contest"
-            description="History of rating deltas across all participated contests."
-          >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="h-96 p-6">
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] md:col-span-2 xl:col-span-2 min-h-[400px]">
+             <CardHeader>
+              <CardTitle className="text-zinc-100">Rating Deltas</CardTitle>
+              <CardDescription className="text-zinc-400">Change per contest.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.rating.changes}>
                     <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
@@ -366,43 +359,30 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                     />
                   </BarChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </ChartSection>
+            </CardContent>
+          </Card>
 
-          <ChartSection
-            title="Contest Participation Analytics"
-            description="Breakdown of contest frequency and gap analysis."
-          >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="space-y-6 p-6">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] md:col-span-2 xl:col-span-2 min-h-[400px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Contest Stats</CardTitle>
+              <CardDescription className="text-zinc-400">Frequency & gaps.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col justify-between">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 mb-4">
                   <CompactStat
-                    label="Rated Contests"
+                    label="Rated"
                     value={data.contest.totalRatedContests.toString()}
                   />
                   <CompactStat
-                    label="Last 30 / 60 / 90"
-                    value={`${data.contest.contestsLast30} / ${data.contest.contestsLast60} / ${data.contest.contestsLast90}`}
+                    label="Recent"
+                    value={`${data.contest.contestsLast30}/${data.contest.contestsLast60}`}
                   />
                   <CompactStat
                     label="Avg Rank"
-                    value={data.contest.avgRank.toFixed(1)}
-                  />
-                  <CompactStat
-                    label="Avg Rating Change"
-                    value={data.contest.avgRatingChange.toFixed(2)}
-                  />
-                  <CompactStat
-                    label="Avg Gap (days)"
-                    value={data.contest.avgGapDays.toFixed(1)}
-                  />
-                  <CompactStat
-                    label="Max Gap (days)"
-                    value={data.contest.maxGapDays.toFixed(1)}
+                    value={data.contest.avgRank.toFixed(0)}
                   />
                 </div>
-                <div className="h-72">
+                <div className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.contest.contestsPerMonth}>
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
@@ -425,29 +405,28 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 </div>
               </CardContent>
             </Card>
-          </ChartSection>
 
-          <ChartSection
-            title="Problem Solving Volume"
-            description="Daily solve counts and cumulative streak tracking."
-          >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="space-y-6 p-6">
-                <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] md:col-span-2 xl:col-span-2 min-h-[400px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Problem Volume</CardTitle>
+              <CardDescription className="text-zinc-400">Daily solves & streak.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col justify-between">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 mb-4">
                   <CompactStat
-                    label="Unique Solved"
+                    label="Solved"
                     value={data.problemVolume.totalUniqueSolved.toString()}
                   />
                   <CompactStat
-                    label="Solve Streak"
-                    value={`${data.problemVolume.solveStreak} days`}
+                    label="Streak"
+                    value={`${data.problemVolume.solveStreak}d`}
                   />
                   <CompactStat
-                    label="Avg Solves/Contest"
-                    value={data.problemVolume.avgSolvesPerContest.toFixed(2)}
+                    label="Avg/Contest"
+                    value={data.problemVolume.avgSolvesPerContest.toFixed(1)}
                   />
                 </div>
-                <div className="h-72">
+                <div className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data.problemVolume.solvedPerMonth}>
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
@@ -469,54 +448,143 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 </div>
               </CardContent>
             </Card>
-          </ChartSection>
 
-          <ChartSection
-            title="Difficulty Distribution"
-            description="Distribution of solved problems by rating tier."
-          >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="space-y-6 p-6">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <CompactStat
-                    label="Highest Solved"
-                    value={data.difficulty.highestSolvedRating.toString()}
-                  />
-                  <CompactStat
-                    label="Avg Solved Rating"
-                    value={data.difficulty.avgSolvedRating.toFixed(1)}
-                  />
-                </div>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.difficulty.distribution}>
-                      <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="band"
-                        tick={{ fill: "#a1a1aa", fontSize: 11 }}
-                      />
-                      <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
-                      <Tooltip
-                        {...darkTooltipProps}
-                        cursor={{ fill: "rgba(161,161,170,0.1)" }}
-                      />
-                      <Bar
-                        dataKey="count"
-                        fill="#38bdf8"
-                        shape={<HatchedBarShape />}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] min-h-[350px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Difficulty Dist.</CardTitle>
+              <CardDescription className="text-zinc-400">Solved by rating.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.difficulty.distribution}>
+                    <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="band"
+                      tick={{ fill: "#a1a1aa", fontSize: 10 }}
+                      interval={0}
+                      angle={-20}
+                      textAnchor="end"
+                      height={40}
+                    />
+                    <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                    <Tooltip
+                      {...darkTooltipProps}
+                      cursor={{ fill: "rgba(161,161,170,0.1)" }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="#38bdf8"
+                      shape={<HatchedBarShape />}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
-          </ChartSection>
 
-          <ChartSection
-            title="Difficulty Progression Over Time"
-            description="Average and highest solved rating by month."
-          >
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] min-h-[350px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Tags</CardTitle>
+              <CardDescription className="text-zinc-400">Top topics.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={data.tags.topTags.slice(0, 8)}
+                    layout="vertical"
+                    margin={{ left: 0, right: 0 }}
+                  >
+                    <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
+                    <XAxis
+                      type="number"
+                      tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                      hide
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="tag"
+                      tick={{ fill: "#a1a1aa", fontSize: 10 }}
+                      width={80}
+                    />
+                    <Tooltip
+                      {...darkTooltipProps}
+                      cursor={{ fill: "rgba(161,161,170,0.1)" }}
+                    />
+                    <Bar
+                      dataKey="solved"
+                      fill="#38bdf8"
+                      shape={<HatchedBarShape />}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] min-h-[350px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Verdicts</CardTitle>
+              <CardDescription className="text-zinc-400">Submission results.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[250px]">
+            <IncreaseSizePieChart
+              className="h-full border-none bg-transparent p-0"
+              data={data.submissions.verdictBreakdown
+                .slice(0, 6)
+                .map((row, idx) => ({
+                  name: row.name,
+                  value: row.value,
+                  fill: [
+                    "#22c55e",
+                    "#ef4444",
+                    "#38bdf8",
+                    "#f59e0b",
+                    "#a78bfa",
+                    "#f43f5e",
+                  ][idx % 6],
+                }))}
+            />
+            </CardContent>
+          </Card>
+
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] min-h-[350px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Languages</CardTitle>
+              <CardDescription className="text-zinc-400">Usage stats.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.submissions.languageUsage.slice(0, 8)}>
+                    <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="language"
+                      tick={{ fill: "#a1a1aa", fontSize: 10 }}
+                      interval={0}
+                      angle={-20}
+                      textAnchor="end"
+                      height={50}
+                    />
+                    <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                    <Tooltip
+                      {...darkTooltipProps}
+                      cursor={{ fill: "rgba(161,161,170,0.1)" }}
+                    />
+                    <Bar
+                      dataKey="submissions"
+                      fill="#f59e0b"
+                      shape={<HatchedBarShape />}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] md:col-span-2 xl:col-span-2 min-h-[400px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Difficulty Trend</CardTitle>
+              <CardDescription className="text-zinc-400">Avg & Max rating.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
             <DottedMultiLineChart
+              className="h-full border-none bg-transparent p-0"
               primaryLabel="Average Rating"
               secondaryLabel="Highest Rating"
               showSecondary
@@ -526,31 +594,32 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 secondary: row.maxRating,
               }))}
             />
-          </ChartSection>
+            </CardContent>
+          </Card>
 
-          <ChartSection
-            title="Upsolve Analytics"
-            description="Practice problems solved after contest duration."
-          >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="space-y-6 p-6">
-                <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] md:col-span-2 xl:col-span-2 min-h-[400px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Upsolves</CardTitle>
+              <CardDescription className="text-zinc-400">Practice activity.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col justify-between p-6">
+                <div className="grid grid-cols-3 gap-2 mb-4">
                   <CompactStat
-                    label="Total Upsolves"
+                    label="Total"
                     value={data.upsolve.totalUpsolves.toString()}
                   />
                   <CompactStat
-                    label="Upsolve Ratio"
-                    value={`${(data.upsolve.upsolveRatio * 100).toFixed(1)}%`}
+                    label="Ratio"
+                    value={`${(data.upsolve.upsolveRatio * 100).toFixed(0)}%`}
                   />
                   <CompactStat
-                    label="Upsolves / Contest"
-                    value={data.upsolve.upsolvesPerContest.toFixed(2)}
+                    label="Per Contest"
+                    value={data.upsolve.upsolvesPerContest.toFixed(1)}
                   />
                 </div>
-                <div className="h-72">
+                <div className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.upsolve.byContest.slice(0, 12)}>
+                    <BarChart data={data.upsolve.byContest.slice(0, 15)}>
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                       <XAxis dataKey="contest" hide />
                       <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
@@ -568,146 +637,13 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 </div>
               </CardContent>
             </Card>
-          </ChartSection>
 
-          <ChartSection
-            title="Submission Verdict Proportions"
-            description="Proportional verdict split from profile submissions."
-          >
-            <IncreaseSizePieChart
-              data={data.submissions.verdictBreakdown.slice(0, 8).map((row, idx) => ({
-                name: row.name,
-                value: row.value,
-                fill: [
-                  "#22c55e",
-                  "#ef4444",
-                  "#38bdf8",
-                  "#f59e0b",
-                  "#a78bfa",
-                  "#f43f5e",
-                  "#06b6d4",
-                  "#84cc16",
-                ][idx % 8],
-              }))}
-            />
-          </ChartSection>
-
-
-
-          <ChartSection
-            title="Tag Coverage"
-            description="Performance across different algorithmic topics."
-          >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="space-y-6 p-6">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <CompactStat
-                    label="Unique Tags"
-                    value={data.tags.uniqueTags.toString()}
-                  />
-                  <CompactStat
-                    label="Least Practiced"
-                    value={
-                      data.tags.leastTags
-                        .slice(0, 3)
-                        .map((t) => t.tag)
-                        .join(", ") || "-"
-                    }
-                  />
-                </div>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={data.tags.topTags}
-                      layout="vertical"
-                      margin={{ left: 12, right: 16 }}
-                    >
-                      <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-                      <XAxis
-                        type="number"
-                        tick={{ fill: "#a1a1aa", fontSize: 11 }}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="tag"
-                        tick={{ fill: "#a1a1aa", fontSize: 11 }}
-                        width={120}
-                      />
-                      <Tooltip
-                        {...darkTooltipProps}
-                        cursor={{ fill: "rgba(161,161,170,0.1)" }}
-                      />
-                      <Bar
-                        dataKey="solved"
-                        fill="#38bdf8"
-                        shape={<HatchedBarShape />}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </ChartSection>
-
-          <ChartSection
-            title="Submission Efficiency & Language Usage"
-            description="Language usage and attempts per solved problem."
-          >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="space-y-6 p-6">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <CompactStat
-                    label="Total Submissions"
-                    value={data.submissions.total.toString()}
-                  />
-                  <CompactStat
-                    label="Accepted"
-                    value={data.submissions.accepted.toString()}
-                  />
-                  <CompactStat
-                    label="Success Rate"
-                    value={`${data.submissions.successRate.toFixed(1)}%`}
-                  />
-                  <CompactStat
-                    label="Avg Attempts/Solved"
-                    value={data.submissions.avgAttemptsPerSolved.toFixed(2)}
-                  />
-                </div>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.submissions.languageUsage}>
-                      <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="language"
-                        tick={{ fill: "#a1a1aa", fontSize: 10 }}
-                        interval={0}
-                        angle={-20}
-                        textAnchor="end"
-                        height={70}
-                      />
-                      <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
-                      <Tooltip
-                        {...darkTooltipProps}
-                        cursor={{ fill: "rgba(161,161,170,0.1)" }}
-                      />
-                      <Bar
-                        dataKey="submissions"
-                        fill="#f59e0b"
-                        shape={<HatchedBarShape />}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </ChartSection>
-
-          <ChartSection
-            title="Accuracy Over Time"
-            description="Success rate trends on a monthly basis."
-          >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="h-96 p-6">
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] md:col-span-2 xl:col-span-2 min-h-[400px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Accuracy</CardTitle>
+              <CardDescription className="text-zinc-400">Monthly success rate.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.submissions.monthlySuccessRate}>
                     <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
@@ -731,21 +667,20 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-          </ChartSection>
 
-          <ChartSection
-            title="Above-Rated Problem Analysis"
-            description="Performance on problems rated higher than current rating."
-          >
-            <Card className="border-zinc-800 bg-[#171717]">
-              <CardContent className="space-y-6 p-6">
-                <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="col-span-1 border-zinc-800 bg-[#171717] md:col-span-2 xl:col-span-2 min-h-[400px]">
+            <CardHeader>
+              <CardTitle className="text-zinc-100">Above Rated</CardTitle>
+              <CardDescription className="text-zinc-400">Pushing limits.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col justify-between">
+                <div className="grid grid-cols-3 gap-2 mb-4">
                   <CompactStat
-                    label="Above-Rated"
+                    label="Count"
                     value={data.aboveRated.aboveCount.toString()}
                   />
                   <CompactStat
-                    label="Above-Rated %"
+                    label="Percentage"
                     value={`${data.aboveRated.abovePct.toFixed(1)}%`}
                   />
                   <CompactStat
@@ -753,20 +688,23 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                     value={data.aboveRated.avgGap.toFixed(1)}
                   />
                 </div>
-                <div className="h-72">
+                <div className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={[
                         { bucket: "Below", value: data.aboveRated.belowCount },
                         { bucket: "Above", value: data.aboveRated.aboveCount },
                       ]}
+                      layout="vertical"
                     >
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-                      <XAxis
+                      <XAxis type="number" hide />
+                      <YAxis
+                        type="category"
                         dataKey="bucket"
                         tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                        width={40}
                       />
-                      <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
                       <Tooltip
                         {...darkTooltipProps}
                         cursor={{ fill: "rgba(161,161,170,0.1)" }}
@@ -781,7 +719,6 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 </div>
               </CardContent>
             </Card>
-          </ChartSection>
         </div>
       </div>
     </div>
