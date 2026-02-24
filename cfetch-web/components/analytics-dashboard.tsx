@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardContent,
@@ -367,7 +369,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
               <CardTitle className="text-zinc-100">Contest Stats</CardTitle>
               <CardDescription className="text-zinc-400">Frequency & gaps.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-1 flex-col justify-between">
+            <CardContent className="flex flex-1 flex-col justify-between p-6">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 mb-4">
                   <CompactStat
                     label="Rated"
@@ -411,7 +413,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
               <CardTitle className="text-zinc-100">Problem Volume</CardTitle>
               <CardDescription className="text-zinc-400">Daily solves & streak.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-1 flex-col justify-between">
+            <CardContent className="flex flex-1 flex-col justify-between p-6">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 mb-4">
                   <CompactStat
                     label="Solved"
