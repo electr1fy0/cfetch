@@ -12,11 +12,11 @@ export default function LandingPage() {
       <div className="relative z-10 w-full max-w-4xl px-6 flex flex-col items-center text-center space-y-16">
         
         {/* Header / Logo */}
-        <div className="space-y-12">
-          <h1 className="font-[family-name:var(--font-geist-pixel-square)] text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm opacity-50">
+        <div className="space-y-24">
+          <h1 className="font-[family-name:var(--font-geist-pixel-triangle)] text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm opacity-50">
             cfetch
           </h1>
-          <p className="text-3xl md:text-5xl font-medium text-zinc-400 max-w-3xl mx-auto leading-tight">
+          <p className="font-[family-name:var(--font-geist-pixel-square)] text-3xl md:text-5xl font-medium text-zinc-400 max-w-3xl mx-auto leading-tight">
             Codeforces analytics. <span className="text-zinc-100">Visualized.</span>
           </p>
         </div>
