@@ -18,10 +18,10 @@ import {
   Award,
   Hash,
   Target,
+  Trophy,
 } from "lucide-react";
 
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PingingDotChart } from "@/components/ui/pinging-dot-chart";
 import { IncreaseSizePieChart } from "@/components/ui/increase-size-pie-chart";
 import { DottedMultiLineChart } from "@/components/ui/dotted-multi-line";
@@ -411,7 +411,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                         tick={{ fill: "#a1a1aa", fontSize: 11 }}
                       />
                       <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
-                      <Tooltip {...darkTooltipProps} />
+                      <Tooltip
+                        {...darkTooltipProps}
+                        cursor={{ fill: "rgba(161,161,170,0.1)" }}
+                      />
                       <Bar
                         dataKey="contests"
                         fill="#f97316"
@@ -493,7 +496,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                         tick={{ fill: "#a1a1aa", fontSize: 11 }}
                       />
                       <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
-                      <Tooltip {...darkTooltipProps} />
+                      <Tooltip
+                        {...darkTooltipProps}
+                        cursor={{ fill: "rgba(161,161,170,0.1)" }}
+                      />
                       <Bar
                         dataKey="count"
                         fill="#38bdf8"
@@ -548,7 +554,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                       <XAxis dataKey="contest" hide />
                       <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
-                      <Tooltip {...darkTooltipProps} />
+                      <Tooltip
+                        {...darkTooltipProps}
+                        cursor={{ fill: "rgba(161,161,170,0.1)" }}
+                      />
                       <Bar
                         dataKey="upsolves"
                         fill="#a78bfa"
@@ -624,7 +633,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                         tick={{ fill: "#a1a1aa", fontSize: 11 }}
                         width={120}
                       />
-                      <Tooltip {...darkTooltipProps} />
+                      <Tooltip
+                        {...darkTooltipProps}
+                        cursor={{ fill: "rgba(161,161,170,0.1)" }}
+                      />
                       <Bar
                         dataKey="solved"
                         fill="#38bdf8"
@@ -674,7 +686,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                         height={70}
                       />
                       <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
-                      <Tooltip {...darkTooltipProps} />
+                      <Tooltip
+                        {...darkTooltipProps}
+                        cursor={{ fill: "rgba(161,161,170,0.1)" }}
+                      />
                       <Bar
                         dataKey="submissions"
                         fill="#f59e0b"
@@ -752,7 +767,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                         tick={{ fill: "#a1a1aa", fontSize: 11 }}
                       />
                       <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
-                      <Tooltip {...darkTooltipProps} />
+                      <Tooltip
+                        {...darkTooltipProps}
+                        cursor={{ fill: "rgba(161,161,170,0.1)" }}
+                      />
                       <Bar
                         dataKey="value"
                         fill="#ef4444"
