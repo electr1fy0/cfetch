@@ -3,7 +3,7 @@ import HandleInput from "@/components/handle-input";
 
 export default async function LandingPage() {
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-start bg-[#070707] pt-10 text-zinc-100 overflow-hidden pb-20 md:justify-center md:pt-0">
+    <div className="relative min-h-screen flex flex-col items-center justify-start bg-[#070707] pt-20 text-zinc-100 overflow-hidden pb-20 md:justify-center md:pt-0">
       <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.07)_0px,rgba(255,255,255,0.07)_1px,transparent_1px,transparent_7px)]" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-zinc-500/10 rounded-full blur-[120px] pointer-events-none" />
 

@@ -36,7 +36,7 @@ export default function HandleInput({ initialValue = "" }: HandleInputProps) {
           value={handle}
           onChange={(e) => setHandle(e.target.value)}
           placeholder="handle"
-          className="flex-1 bg-transparent border-none text-zinc-100 placeholder:text-zinc-700 focus:ring-0 focus:outline-none font-[family-name:var(--font-geist-mono)] text-sm h-10 w-full min-w-0"
+          className="flex-1 bg-transparent border-none text-zinc-100 placeholder:text-zinc-700 focus:ring-0 focus:outline-none font-[family-name:var(--font-geist-mono)] text-base md:text-sm h-10 w-full min-w-0"
           autoFocus
         />
 
