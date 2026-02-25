@@ -35,14 +35,16 @@ export function PingingDotChart({
 }) {
   return (
     <Card className={cn("border-zinc-800 bg-[#171717]", className)}>
-      <CardContent className="p-6">
-        <ChartContainer config={chartConfig}>
+      <CardContent className="p-6 h-full">
+        <ChartContainer config={chartConfig} className="h-full w-full">
           <LineChart
             accessibilityLayer
             data={data}
             margin={{
               left: 12,
               right: 12,
+              top: 10,
+              bottom: 10
             }}
           >
             <CartesianGrid vertical={false} />
