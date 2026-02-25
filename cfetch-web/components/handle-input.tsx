@@ -13,7 +13,7 @@ export default function HandleInput() {
     e.preventDefault();
     if (handle.trim()) {
       setIsLoading(true);
-      router.push(`/analytics?handle=${encodeURIComponent(handle.trim())}`);
+      router.push(`/${encodeURIComponent(handle.trim())}`);
     }
   };
 

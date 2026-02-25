@@ -4,13 +4,12 @@ import { loadAnalytics } from "@/lib/codeforces";
 import HandleInput from "@/components/handle-input";
 
 type Props = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  params: Promise<{ handle: string }>;
 };
 
 export default async function Page(props: Props) {
-  const searchParams = await props.searchParams;
-  const queryHandle =
-    typeof searchParams.handle === "string" ? searchParams.handle.trim() : null;
+  const { handle } = await props.params;
+  const queryHandle = decodeURIComponent(handle).trim();
 
   if (!queryHandle) {
     redirect("/landing");
