@@ -60,7 +60,6 @@ export function PingingDotChart({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              minTickGap={32}
             />
             <ChartTooltip
               cursor={false}

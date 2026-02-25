@@ -112,12 +112,16 @@ export function buildModel(
   }
 
   const ratingDeltas = ratingSorted.map((r) => r.newRating - r.oldRating);
-  const ratingTrend = ratingSorted.map((row) => ({
-    label: row.contestName,
-    rating: row.newRating,
-    delta: row.newRating - row.oldRating,
-    at: toDate(row.ratingUpdateTimeSeconds).toLocaleDateString(),
-  }));
+  const ratingTrend = ratingSorted.map((row) => {
+    const date = toDate(row.ratingUpdateTimeSeconds);
+    const shortDate = `${date.toLocaleString("default", { month: "short" })} '${date.getFullYear().toString().slice(2)}`;
+    return {
+      label: row.contestName,
+      rating: row.newRating,
+      delta: row.newRating - row.oldRating,
+      at: shortDate,
+    };
+  });
 
   const ratingStats = {
     max: ratingSorted.length
