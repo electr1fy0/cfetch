@@ -31,16 +31,16 @@ export function PingingDotChart({
 }) {
   return (
     <div className={cn("h-full w-full", className)}>
-      <div className="h-full p-4">
+      <div className="h-full w-full p-2 sm:p-4">
         <ChartContainer config={chartConfig} className="h-full w-full">
           <LineChart
             accessibilityLayer
             data={data}
             margin={{
-              left: 12,
-              right: 12,
-              top: 10,
-              bottom: 10
+              left: 8,
+              right: 8,
+              top: 8,
+              bottom: 8,
             }}
           >
             <CartesianGrid vertical={false} />
@@ -48,14 +48,14 @@ export function PingingDotChart({
               domain={["dataMin - 50", "dataMax + 50"]}
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              width={40}
+              tickMargin={4}
+              width={30}
             />
             <XAxis
               dataKey="label"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={4}
             />
             <ChartTooltip
               cursor={false}

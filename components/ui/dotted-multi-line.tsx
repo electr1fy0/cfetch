@@ -42,14 +42,16 @@ export function DottedMultiLineChart({
 
   return (
     <div className={cn("h-full w-full", className)}>
-      <div className="h-full p-4">
+      <div className="h-full w-full p-2 sm:p-4">
         <ChartContainer config={dynamicConfig} className="h-full w-full !aspect-auto">
           <LineChart
             accessibilityLayer
             data={data}
             margin={{
-              left: 12,
-              right: 12,
+              left: 8,
+              right: 8,
+              top: 8,
+              bottom: 8,
             }}
           >
             <CartesianGrid vertical={false} />
@@ -58,15 +60,15 @@ export function DottedMultiLineChart({
               tickLine={false}
               axisLine={{ stroke: "#3f3f46" }}
               tick={{ fill: "#a1a1aa", fontSize: 11 }}
-              tickMargin={8}
+              tickMargin={4}
               tickFormatter={(value) => value.slice(0, 3)}
             />
             <YAxis
               tickLine={false}
               axisLine={{ stroke: "#3f3f46" }}
               tick={{ fill: "#a1a1aa", fontSize: 11 }}
-              tickMargin={8}
-              width={44}
+              tickMargin={4}
+              width={30}
             />
             <ChartTooltip
               cursor={false}

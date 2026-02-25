@@ -335,7 +335,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
             </CardHeader>
             <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.rating.changes}>
+                  <BarChart
+                    data={data.rating.changes}
+                    margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
+                  >
                     <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                     <XAxis
                       dataKey="contest"
@@ -345,7 +348,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                     />
                     <YAxis
                       tick={{ fill: "#a1a1aa", fontSize: 11 }}
-                      width={44}
+                      width={30}
                     />
                     <Tooltip
                       {...darkTooltipProps}
@@ -383,13 +386,16 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 </div>
                 <div className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.contest.contestsPerMonth}>
+                    <BarChart
+                      data={data.contest.contestsPerMonth}
+                      margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
+                    >
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                       <XAxis
                         dataKey="month"
                         tick={{ fill: "#a1a1aa", fontSize: 11 }}
                       />
-                      <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} width={30} />
                       <Tooltip
                         {...darkTooltipProps}
                         cursor={{ fill: "rgba(161,161,170,0.1)" }}
@@ -427,13 +433,16 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 </div>
                 <div className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data.problemVolume.solvedPerMonth}>
+                    <LineChart
+                      data={data.problemVolume.solvedPerMonth}
+                      margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
+                    >
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                       <XAxis
                         dataKey="month"
                         tick={{ fill: "#a1a1aa", fontSize: 11 }}
                       />
-                      <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} width={30} />
                       <Tooltip {...darkTooltipProps} />
                       <Line
                         type="monotone"
@@ -455,7 +464,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
             </CardHeader>
             <CardContent className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.difficulty.distribution}>
+                  <BarChart
+                    data={data.difficulty.distribution}
+                    margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
+                  >
                     <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                     <XAxis
                       dataKey="band"
@@ -465,7 +477,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                       textAnchor="end"
                       height={40}
                     />
-                    <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                    <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} width={30} />
                     <Tooltip
                       {...darkTooltipProps}
                       cursor={{ fill: "rgba(161,161,170,0.1)" }}
@@ -490,7 +502,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                   <BarChart
                     data={data.tags.topTags.slice(0, 8)}
                     layout="vertical"
-                    margin={{ left: 0, right: 0 }}
+                    margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
                   >
                     <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                     <XAxis
@@ -502,7 +514,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                       type="category"
                       dataKey="tag"
                       tick={{ fill: "#a1a1aa", fontSize: 10 }}
-                      width={80}
+                      width={56}
                     />
                     <Tooltip
                       {...darkTooltipProps}
@@ -551,7 +563,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
             </CardHeader>
             <CardContent className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.submissions.languageUsage.slice(0, 8)}>
+                  <BarChart
+                    data={data.submissions.languageUsage.slice(0, 8)}
+                    margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
+                  >
                     <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                     <XAxis
                       dataKey="language"
@@ -561,7 +576,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                       textAnchor="end"
                       height={50}
                     />
-                    <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                    <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} width={30} />
                     <Tooltip
                       {...darkTooltipProps}
                       cursor={{ fill: "rgba(161,161,170,0.1)" }}
@@ -604,10 +619,13 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
             <CardContent className="flex flex-1 flex-col gap-4 p-6 pt-2">
                 <div className="h-[280px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.upsolve.byContest.slice(0, 15)}>
+                    <BarChart
+                      data={data.upsolve.byContest.slice(0, 15)}
+                      margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
+                    >
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                       <XAxis dataKey="contest" hide />
-                      <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} width={30} />
                       <Tooltip
                         {...darkTooltipProps}
                         cursor={{ fill: "rgba(161,161,170,0.1)" }}
@@ -644,7 +662,10 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
             </CardHeader>
             <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data.submissions.monthlySuccessRate}>
+                  <LineChart
+                    data={data.submissions.monthlySuccessRate}
+                    margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
+                  >
                     <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                     <XAxis
                       dataKey="month"
@@ -653,6 +674,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                     <YAxis
                       tick={{ fill: "#a1a1aa", fontSize: 11 }}
                       domain={[0, 100]}
+                      width={30}
                     />
                     <Tooltip {...darkTooltipProps} />
                     <Line
@@ -695,6 +717,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                         { bucket: "Above", value: data.aboveRated.aboveCount },
                       ]}
                       layout="vertical"
+                      margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
                     >
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
                       <XAxis type="number" hide />
@@ -702,7 +725,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                         type="category"
                         dataKey="bucket"
                         tick={{ fill: "#a1a1aa", fontSize: 11 }}
-                        width={40}
+                        width={30}
                       />
                       <Tooltip
                         {...darkTooltipProps}
