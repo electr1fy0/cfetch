@@ -76,7 +76,7 @@ export default async function HandlePage({ params }: Props) {
                 Check another profile.
               </p>
               <div className="mt-4">
-                <HandleInput className="mx-0 max-w-none" />
+                <HandleInput className="mx-0 max-w-none" autoFocus={false} />
               </div>
             </div>
             <GitHubBadge variant="card" />

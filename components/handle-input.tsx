@@ -8,11 +8,13 @@ import { cn } from "@/lib/utils";
 type HandleInputProps = {
   initialValue?: string;
   className?: string;
+  autoFocus?: boolean;
 };
 
 export default function HandleInput({
   initialValue = "",
   className,
+  autoFocus = true,
 }: HandleInputProps) {
   const [handle, setHandle] = useState(initialValue);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +47,7 @@ export default function HandleInput({
           onChange={(e) => setHandle(e.target.value)}
           placeholder="handle"
           className="flex-1 bg-transparent border-none text-zinc-100 placeholder:text-zinc-700 focus:ring-0 focus:outline-none font-[family-name:var(--font-geist-mono)] text-base md:text-sm h-10 w-full min-w-0"
-          autoFocus
+          autoFocus={autoFocus}
         />
 
         <button
