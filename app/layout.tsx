@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { GeistPixelTriangle, GeistPixelSquare } from "geist/font/pixel";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = GeistSans;
 const geistMono = GeistMono;
@@ -47,7 +48,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${geistPixelTriangle.variable} ${geistPixelSquare.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children} <Analytics />
+      </body>
     </html>
   );
 }
