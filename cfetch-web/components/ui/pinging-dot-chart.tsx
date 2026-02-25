@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import {
   Card,
@@ -46,6 +46,13 @@ export function PingingDotChart({
             }}
           >
             <CartesianGrid vertical={false} />
+            <YAxis
+              domain={["dataMin - 50", "dataMax + 50"]}
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              width={40}
+            />
             <XAxis
               dataKey="label"
               tickLine={false}
