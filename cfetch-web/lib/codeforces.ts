@@ -113,13 +113,11 @@ export function buildModel(
 
   const ratingDeltas = ratingSorted.map((r) => r.newRating - r.oldRating);
   const ratingTrend = ratingSorted.map((row) => {
-    const date = toDate(row.ratingUpdateTimeSeconds);
-    const shortDate = `${date.toLocaleString("default", { month: "short" })} '${date.getFullYear().toString().slice(2)}`;
     return {
       label: row.contestName,
       rating: row.newRating,
       delta: row.newRating - row.oldRating,
-      at: shortDate,
+      at: monthKey(row.ratingUpdateTimeSeconds),
     };
   });
 
@@ -333,10 +331,9 @@ export function buildModel(
       current.max = Math.max(current.max, ratingValue);
       solvedRatingByMonthMap.set(mKey, current);
 
-      const currentRating = user.rating ?? 0;
-      if (ratingValue > currentRating) {
+      if (ratingValue > (user.rating ?? 0)) {
         aboveRatedSolved += 1;
-        aboveRatedGapSum += ratingValue - currentRating;
+        aboveRatedGapSum += ratingValue - (user.rating ?? 0);
       }
     }
   }

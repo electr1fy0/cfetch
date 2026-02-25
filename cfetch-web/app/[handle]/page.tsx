@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 import { loadAnalytics } from "@/lib/codeforces";
@@ -15,22 +16,22 @@ export default async function Page(props: Props) {
     redirect("/landing");
   }
 
+  let model;
+  let errorMessage;
+
   try {
-    const model = await loadAnalytics(queryHandle);
-    return (
-      <div className="">
-        <AnalyticsDashboard data={model} />
-      </div>
-    );
+    model = await loadAnalytics(queryHandle);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to load analytics";
+    errorMessage = error instanceof Error ? error.message : "Failed to load analytics";
+  }
+
+  if (errorMessage) {
     return (
       <div className="min-h-screen bg-[#070707] flex flex-col items-center justify-center p-6 text-zinc-100">
         <div className="w-full max-w-md space-y-6">
           <div className="rounded-xl border border-red-900/40 bg-red-950/10 p-4 text-sm text-red-200 text-center">
             <p className="font-semibold mb-1">Could not load profile</p>
-            <p className="opacity-80">{message}</p>
+            <p className="opacity-80">{errorMessage}</p>
           </div>
           
           <div className="bg-[#171717] p-6 rounded-xl border border-zinc-800 shadow-xl">
@@ -39,12 +40,18 @@ export default async function Page(props: Props) {
           </div>
           
           <div className="text-center">
-            <a href="/landing" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+            <Link href="/landing" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
               &larr; Back to Home
-            </a>
+            </Link>
           </div>
         </div>
       </div>
     );
   }
+
+  return (
+    <div className="">
+      <AnalyticsDashboard data={model!} />
+    </div>
+  );
 }

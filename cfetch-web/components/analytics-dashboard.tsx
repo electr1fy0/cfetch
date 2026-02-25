@@ -20,11 +20,7 @@ import {
 } from "recharts";
 import {
   TrendingUp,
-  TrendingDown,
-  Activity,
   Award,
-  Hash,
-  Target,
   Trophy,
 } from "lucide-react";
 import { PingingDotChart } from "@/components/ui/pinging-dot-chart";
@@ -213,9 +209,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
       <div className="pointer-events-none fixed inset-0 bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.07)_0px,rgba(255,255,255,0.07)_1px,transparent_1px,transparent_7px)]" />
 
       <div className="relative mx-auto w-full max-w-[1600px] space-y-4">
-        {/* Header / Profile Stats Row */}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {/* Profile Card */}
           <Card className="col-span-1 flex flex-col justify-between border-zinc-800 bg-[#171717] p-6 font-mono md:col-span-2 xl:col-span-2">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
@@ -274,7 +268,6 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
             </div>
           </Card>
 
-          {/* Rating Card */}
           <Card className="relative col-span-1 flex flex-col justify-center border-zinc-800 bg-[#171717] p-6 font-mono md:col-span-2 xl:col-span-2">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -318,7 +311,6 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
           </Card>
         </div>
 
-        {/* Main Grid */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card className="col-span-1 border-zinc-800 bg-[#171717] md:col-span-2 xl:col-span-2 min-h-[400px]">
             <CardHeader>

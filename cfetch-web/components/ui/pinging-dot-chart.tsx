@@ -84,9 +84,7 @@ const CustomizedDot = (props: React.SVGProps<SVGCircleElement>) => {
 
   return (
     <g>
-      {/* Main dot */}
       <circle cx={cx} cy={cy} r={3} fill={stroke} />
-      {/* Ping animation circles */}
       <circle
         cx={cx}
         cy={cy}

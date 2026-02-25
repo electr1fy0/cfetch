@@ -19,12 +19,8 @@ export default function HandleInput() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm mx-auto group relative">
-        {/* Pixel-style corners/border effect using shadows or pseudoelements could be complex, 
-            so we'll use a sharp border with a diagonal pattern background on the container */}
-        
         <div className="relative flex items-center p-1 bg-[#111] border border-zinc-800 shadow-[4px_4px_0px_0px_rgba(39,39,42,0.5)] transition-all focus-within:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] focus-within:border-zinc-600">
             
-            {/* Diagonal stripe pattern overlay for texture */}
             <div className="pointer-events-none absolute inset-0 opacity-[0.03] bg-[repeating-linear-gradient(45deg,#fff_0px,#fff_1px,transparent_1px,transparent_4px)]" />
 
             <div className="pl-3 pr-2 text-zinc-500">
