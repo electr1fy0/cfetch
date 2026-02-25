@@ -333,7 +333,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
               <CardTitle className="text-zinc-100">Rating Deltas</CardTitle>
               <CardDescription className="text-zinc-400">Change per contest.</CardDescription>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[340px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={data.rating.changes}
