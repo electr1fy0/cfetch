@@ -61,7 +61,7 @@ export async function GitHubBadge({ variant = "inline" }: GitHubBadgeProps) {
             href={REPO_URL}
             target="_blank"
             rel="noreferrer noopener"
-            className="inline-flex items-center gap-2 border border-zinc-700 bg-zinc-900 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-zinc-200 transition-colors hover:border-zinc-500 hover:text-white font-[family-name:var(--font-geist-pixel-square)]"
+            className="inline-flex shrink-0 whitespace-nowrap items-center gap-2 border border-zinc-700 bg-zinc-900 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-zinc-200 transition-colors hover:border-zinc-500 hover:text-white font-[family-name:var(--font-geist-pixel-square)]"
             aria-label="Open GitHub repository"
           >
             <Github className="h-3.5 w-3.5" />

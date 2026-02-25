@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 import { GitHubBadge } from "@/components/github-badge";
 import HandleInput from "@/components/handle-input";
@@ -8,12 +9,26 @@ type Props = {
   params: Promise<{ handle: string }>;
 };
 
-function formatErrorMessage(error: unknown, handle: string): string {
+function formatErrorMessage(error: unknown, handle: string): ReactNode {
   const fallback = "Failed to load analytics. Please try again.";
   if (!(error instanceof Error)) return fallback;
+  const message = error.message.toLowerCase();
 
-  if (error.message.includes("404")) {
-    return `The handle \"${handle}\" does not exist on Codeforces.`;
+  if (
+    message.includes("400") ||
+    message.includes("404") ||
+    message.includes("not found") ||
+    message.includes("user with handle")
+  ) {
+    return (
+      <>
+        The handle{" "}
+        <code className="rounded bg-zinc-900 px-1 py-0.5 font-mono text-zinc-200">
+          {handle}
+        </code>{" "}
+        does not exist on Codeforces.
+      </>
+    );
   }
 
   return error.message;
@@ -25,7 +40,7 @@ export default async function HandlePage({ params }: Props) {
 
   if (!queryHandle) {
     return (
-      <div className="min-h-screen bg-[#070707] flex flex-col items-center justify-center p-6 text-zinc-100">
+      <div className="min-h-screen bg-[#070707] bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.07)_0px,rgba(255,255,255,0.07)_1px,transparent_1px,transparent_7px)] flex flex-col items-center justify-center p-6 text-zinc-100">
         <div className="w-full max-w-md space-y-6">
           <div className="bg-[#111] p-6 border border-zinc-800 shadow-[4px_4px_0px_0px_rgba(39,39,42,0.5)] text-center space-y-2">
             <p className="font-[family-name:var(--font-geist-pixel-square)] text-xl text-zinc-100">
@@ -51,8 +66,19 @@ export default async function HandlePage({ params }: Props) {
     return (
       <>
         <AnalyticsDashboard data={model} />
-        <div className="bg-[#070707] px-4 pb-8 sm:px-6 lg:px-8">
+        <div className="relative z-20 bg-[#070707] bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.07)_0px,rgba(255,255,255,0.07)_1px,transparent_1px,transparent_7px)] px-4 pb-8 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-3xl">
+            <div className="mb-4 border border-zinc-800 bg-[#111] p-5 shadow-[4px_4px_0px_0px_rgba(39,39,42,0.5)]">
+              <p className="font-[family-name:var(--font-geist-pixel-square)] text-sm uppercase tracking-[0.18em] text-zinc-200">
+                Analyze Another Handle
+              </p>
+              <p className="mt-2 text-sm text-zinc-300">
+                Check another profile.
+              </p>
+              <div className="mt-4">
+                <HandleInput className="mx-0 max-w-none" />
+              </div>
+            </div>
             <GitHubBadge variant="card" />
           </div>
         </div>
@@ -60,7 +86,7 @@ export default async function HandlePage({ params }: Props) {
     );
   } catch (error) {
     return (
-      <div className="min-h-screen bg-[#070707] flex flex-col items-center justify-center p-6 text-zinc-100">
+      <div className="min-h-screen bg-[#070707] bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.07)_0px,rgba(255,255,255,0.07)_1px,transparent_1px,transparent_7px)] flex flex-col items-center justify-center p-6 text-zinc-100">
         <div className="w-full max-w-md space-y-6">
           <div className="bg-[#111] p-6 border border-zinc-800 shadow-[4px_4px_0px_0px_rgba(39,39,42,0.5)] text-center space-y-2">
             <p className="font-[family-name:var(--font-geist-pixel-square)] text-xl text-zinc-100">
@@ -79,7 +105,6 @@ export default async function HandlePage({ params }: Props) {
               &larr; Back to Home
             </Link>
           </div>
-          <GitHubBadge variant="card" />
         </div>
       </div>
     );

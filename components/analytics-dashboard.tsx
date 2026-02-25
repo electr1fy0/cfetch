@@ -266,8 +266,8 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
   const rankColor = getRankColor(data.basic.rank);
 
   return (
-    <div className="min-h-screen bg-[#070707] p-4 text-zinc-100 sm:p-6 lg:p-8">
-      <div className="pointer-events-none fixed inset-0 bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.07)_0px,rgba(255,255,255,0.07)_1px,transparent_1px,transparent_7px)]" />
+    <div className="relative min-h-screen overflow-hidden bg-[#070707] p-4 text-zinc-100 sm:p-6 lg:p-8">
+      <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.07)_0px,rgba(255,255,255,0.07)_1px,transparent_1px,transparent_7px)]" />
 
       <div className="relative mx-auto w-full max-w-[1600px] space-y-4">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

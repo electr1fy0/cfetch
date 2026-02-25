@@ -3,12 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Terminal } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type HandleInputProps = {
   initialValue?: string;
+  className?: string;
 };
 
-export default function HandleInput({ initialValue = "" }: HandleInputProps) {
+export default function HandleInput({
+  initialValue = "",
+  className,
+}: HandleInputProps) {
   const [handle, setHandle] = useState(initialValue);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -23,7 +28,10 @@ export default function HandleInput({ initialValue = "" }: HandleInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm mx-auto group relative">
+    <form
+      onSubmit={handleSubmit}
+      className={cn("group relative w-full max-w-sm mx-auto", className)}
+    >
       <div className="relative flex items-center p-1 bg-[#111] border border-zinc-800 shadow-[4px_4px_0px_0px_rgba(39,39,42,0.5)] transition-all focus-within:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] focus-within:border-zinc-600">
         <div className="pointer-events-none absolute inset-0 opacity-[0.03] bg-[repeating-linear-gradient(45deg,#fff_0px,#fff_1px,transparent_1px,transparent_4px)]" />
 
