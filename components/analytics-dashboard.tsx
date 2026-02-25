@@ -259,9 +259,9 @@ function getRankColor(rank: string | null) {
 }
 
 export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
-  const registration = new Date(
-    data.basic.registrationDate
-  ).toLocaleDateString();
+  const registration = new Date(data.basic.registrationDate)
+    .toISOString()
+    .slice(0, 10);
 
   const rankColor = getRankColor(data.basic.rank);
 
