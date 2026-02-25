@@ -29,6 +29,11 @@ export function DottedMultiLineChart({
   showSecondary?: boolean;
   className?: string;
 }) {
+  const formatTick = (value: string) => {
+    if (/^\d{4}-\d{2}$/.test(value)) return value.slice(2);
+    return value;
+  };
+
   const dynamicConfig = {
     primary: {
       label: primaryLabel,
@@ -61,7 +66,7 @@ export function DottedMultiLineChart({
               axisLine={{ stroke: "#3f3f46" }}
               tick={{ fill: "#a1a1aa", fontSize: 11 }}
               tickMargin={4}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={formatTick}
             />
             <YAxis
               tickLine={false}

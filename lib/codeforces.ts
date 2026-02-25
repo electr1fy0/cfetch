@@ -102,6 +102,9 @@ export function buildModel(
   const ratingSorted = [...rating].sort(
     (a, b) => a.ratingUpdateTimeSeconds - b.ratingUpdateTimeSeconds,
   );
+  const participatedContestIds = new Set(
+    ratingSorted.map((row) => row.contestId),
+  );
   const submissions = [...submissionsRaw].sort(
     (a, b) => a.creationTimeSeconds - b.creationTimeSeconds,
   );
@@ -296,7 +299,11 @@ export function buildModel(
     const contestId = problem.contestId;
     if (typeof contestId === "number") {
       const contest = contestByID.get(contestId);
-      if (contest?.startTimeSeconds && contest.durationSeconds) {
+      if (
+        participatedContestIds.has(contestId) &&
+        contest?.startTimeSeconds &&
+        contest.durationSeconds
+      ) {
         const end = contest.startTimeSeconds + contest.durationSeconds;
         if (ts > end) {
           totalUpsolves += 1;
@@ -374,10 +381,10 @@ export function buildModel(
     }))
     .sort((a, b) => a.month.localeCompare(b.month));
 
-  const upsolveByContest = [...upsolveByContestMap.entries()]
-    .map(([contest, upsolves]) => ({ contest, upsolves }))
-    .sort((a, b) => b.upsolves - a.upsolves)
-    .slice(0, 20);
+  const upsolveByContest = ratingSorted.map((row) => ({
+    contest: row.contestName,
+    upsolves: upsolveByContestMap.get(row.contestName) ?? 0,
+  }));
 
   const topTags = [...tagFrequencyMap.entries()]
     .map(([tag, solvedTagCount]) => ({ tag, solved: solvedTagCount }))

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import {
   Card,
   CardContent,
@@ -22,6 +23,7 @@ import {
   TrendingUp,
   Award,
   Trophy,
+  Info,
 } from "lucide-react";
 import { PingingDotChart } from "@/components/ui/pinging-dot-chart";
 import { IncreaseSizePieChart } from "@/components/ui/increase-size-pie-chart";
@@ -119,6 +121,52 @@ const darkTooltipProps = {
   labelStyle: { color: "#d6d3d1" },
 };
 
+function InfoHint({ text, label }: { text: string; label: string }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <span ref={rootRef} className="relative inline-flex">
+      <button
+        type="button"
+        className="cursor-pointer text-zinc-500 hover:text-zinc-300"
+        aria-label={`${label} info`}
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <Info className="h-3.5 w-3.5" />
+      </button>
+      {open ? (
+        <div className="absolute left-1/2 top-full z-50 mt-2 w-52 -translate-x-1/2 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-[10px] leading-snug text-zinc-200 shadow-lg">
+          {text}
+        </div>
+      ) : null}
+    </span>
+  );
+}
+
 const HatchedBarShape = (
   props: React.SVGProps<SVGRectElement> & {
     dataKey?: string;
@@ -174,12 +222,25 @@ const HatchedBarShape = (
   );
 };
 
-function CompactStat({ label, value }: { label: string; value: string }) {
+function CompactStat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
   return (
     <div className="rounded-md border border-zinc-800 bg-[#111] px-3 py-2">
-      <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
-        {label}
-      </p>
+      <div className="flex items-center gap-1">
+        <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
+          {label}
+        </p>
+        {hint ? (
+          <InfoHint text={hint} label={label} />
+        ) : null}
+      </div>
       <p className="mt-1 text-sm font-semibold text-zinc-100">{value}</p>
     </div>
   );
@@ -242,25 +303,43 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 <p className="text-sm text-zinc-200">{registration}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500">
-                  Contribution
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+                    Contribution
+                  </p>
+                  <InfoHint
+                    label="Contribution"
+                    text="Codeforces contribution score from your profile."
+                  />
+                </div>
                 <p className="text-sm text-zinc-200">
                   {data.basic.contribution}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500">
-                  Max Increase
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+                    Max Increase
+                  </p>
+                  <InfoHint
+                    label="Max Increase"
+                    text="Largest positive rating change in a single rated contest."
+                  />
+                </div>
                 <p className="text-sm text-emerald-400">
                   +{data.rating.largestIncrease}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500">
-                  Max Decrease
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+                    Max Decrease
+                  </p>
+                  <InfoHint
+                    label="Max Decrease"
+                    text="Largest negative rating change in a single rated contest."
+                  />
+                </div>
                 <p className="text-sm text-rose-400">
                   {data.rating.largestDecrease}
                 </p>
@@ -296,7 +375,13 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                   </p>
                 </div>
                 <div className="space-y-0.5 text-right">
-                  <p className="text-zinc-500">To Max</p>
+                  <div className="flex items-center justify-end gap-1">
+                    <p className="text-zinc-500">To Max</p>
+                    <InfoHint
+                      label="To Max"
+                      text="Current gap between your max rating and current rating."
+                    />
+                  </div>
                   <p className="flex items-center justify-end gap-1.5 text-zinc-200">
                     {data.basic.ratingDeltaFromMax}
                     {data.basic.ratingDeltaFromMax === 0 ? (
@@ -374,14 +459,17 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                   <CompactStat
                     label="Rated"
                     value={data.contest.totalRatedContests.toString()}
+                    hint="Number of rated contests in your Codeforces rating history."
                   />
                   <CompactStat
                     label="Recent"
                     value={`${data.contest.contestsLast30}/${data.contest.contestsLast60}`}
+                    hint="Contests played in the last 30 days / last 60 days."
                   />
                   <CompactStat
                     label="Avg Rank"
                     value={data.contest.avgRank.toFixed(0)}
+                    hint="Average rank across all rated contests."
                   />
                 </div>
                 <div className="h-[200px] w-full">
@@ -421,14 +509,17 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                   <CompactStat
                     label="Solved"
                     value={data.problemVolume.totalUniqueSolved.toString()}
+                    hint="Unique problems solved with an accepted verdict."
                   />
                   <CompactStat
                     label="Streak"
                     value={`${data.problemVolume.solveStreak}d`}
+                    hint="Longest run of consecutive days with at least one accepted solve."
                   />
                   <CompactStat
                     label="Avg/Contest"
                     value={data.problemVolume.avgSolvesPerContest.toFixed(1)}
+                    hint="Unique solved problems divided by total rated contests."
                   />
                 </div>
                 <div className="h-[200px] w-full">
@@ -620,7 +711,7 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                 <div className="h-[280px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={data.upsolve.byContest.slice(0, 15)}
+                      data={data.upsolve.byContest}
                       margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
                     >
                       <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
@@ -642,14 +733,17 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                   <CompactStat
                     label="Total"
                     value={data.upsolve.totalUpsolves.toString()}
+                    hint="Accepted solves done after contest end, only for contests you participated in."
                   />
                   <CompactStat
                     label="Ratio"
                     value={`${(data.upsolve.upsolveRatio * 100).toFixed(0)}%`}
+                    hint="Total upsolves divided by total unique solved problems."
                   />
                   <CompactStat
                     label="Per Contest"
                     value={data.upsolve.upsolvesPerContest.toFixed(1)}
+                    hint="Total upsolves divided by your total rated contests."
                   />
                 </div>
               </CardContent>
@@ -699,14 +793,17 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsViewModel }) {
                   <CompactStat
                     label="Count"
                     value={data.aboveRated.aboveCount.toString()}
+                    hint="Solved problems whose rating is above your current rating."
                   />
                   <CompactStat
                     label="Percentage"
                     value={`${data.aboveRated.abovePct.toFixed(1)}%`}
+                    hint="Above-rated solved count divided by total unique solved problems."
                   />
                   <CompactStat
                     label="Avg Gap"
                     value={data.aboveRated.avgGap.toFixed(1)}
+                    hint="Average rating difference for above-rated solved problems."
                   />
                 </div>
                 <div className="h-[200px] w-full">
